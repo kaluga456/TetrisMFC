@@ -1,13 +1,13 @@
 #pragma once
 
-constexpr UINT BLOCK_VIEW_SIZE = 28;
+constexpr UINT BLOCK_VIEW_SIZE = 28; //CGameFieldView: 336 x 672 for block size = 28
 constexpr UINT GAME_FIELD_VIEW_WIDTH = (BLOCK_VIEW_SIZE * GAME_FIELD_WIDTH);
 constexpr UINT GAME_FIELD_VIEW_HEIGHT = (BLOCK_VIEW_SIZE * GAME_FIELD_HEIGHT);
 constexpr UINT TEXT_VIEW_WIDTH = 100;
 constexpr UINT TEXT_VIEW_HEIGHT = 30;
 
-constexpr UINT NEXT_SHAPE_BLOCK_SIZE = 16;
-constexpr UINT NEXT_SHAPE_VIEW_WIDTH = 100;
+constexpr UINT NEXT_SHAPE_BLOCK_SIZE = 20;
+constexpr UINT NEXT_SHAPE_VIEW_WIDTH = TEXT_VIEW_WIDTH;
 constexpr UINT NEXT_SHAPE_VIEW_HEIGHT = 100;
 
 constexpr UINT APPWND_PADDING = 12;
@@ -80,11 +80,18 @@ public:
 	void OnLinesDelete();
 	void OnGameOver();
 
+	//TEST:
+	void DrawBackground(CDC* dc);
 private:
 	int State;
 	CFont Font;
 	CShape PrevShape;
 	const CGameField* GameField;
+
+	//TEST:
+	CBitmap Backgorund;
+	BITMAP BgInfo;
+	CDC BgMemory;
 
 	void DrawBlock(CDC* dc, int x, int y, COLORREF color);
 	void PaintText(CDC* dc, CString text);

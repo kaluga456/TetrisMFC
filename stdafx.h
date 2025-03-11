@@ -15,10 +15,9 @@
 #include <algorithm>
 #include <string>
 
-//WinAPI
-
 //MFC
 #include <afxwin.h>
 #include <atltime.h>
 #include <afxcmn.h>
 
+//WinAPI

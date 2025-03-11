@@ -14,6 +14,8 @@ CStatistic Statistics;
 CTetrisApp TetrisApp;
 CAppWnd* AppWnd;
 
+CWinApp* ThisApp = &TetrisApp;
+
 BOOL CTetrisApp::InitInstance()
 {
 	Options.Read(m_pszProfileName);

@@ -15,8 +15,9 @@
 
 extern COptions Options;
 extern CStatistic Statistics;
-//extern CTetrisApp TetrisApp;
+extern CWinApp* ThisApp;
 extern CAppWnd* AppWnd;
+
 static app::random_value<int> RandomColor(100, 255);
 
 BEGIN_MESSAGE_MAP(CAppWnd, CWnd)
@@ -44,7 +45,8 @@ CAppWnd::CAppWnd() : CFrameWnd()
 		wndclass = ::AfxRegisterWndClass(
 			CS_HREDRAW | CS_VREDRAW, 
 			::LoadCursor(NULL, IDC_ARROW), 
-			(HBRUSH)(COLOR_BTNFACE+1),
+			NULL,
+			//(HBRUSH)(COLOR_BTNFACE+1),
 			::LoadIcon(::AfxGetInstanceHandle(), MAKEINTRESOURCE(ID_MAIN_ICON)));
 	}
 	catch(CResourceException* pEx)
@@ -67,6 +69,10 @@ CAppWnd::CAppWnd() : CFrameWnd()
 	r.bottom += mbi.rcBar.bottom - mbi.rcBar.top;
 	MoveWindow(Options.LayoutX, Options.LayoutY, r.Width(), r.Height());
 	LoadAccelTable(MAKEINTRESOURCE(IDR_ACCELERATOR));
+
+	//load sound resources
+	//FindResource(::AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_WAVE_BOOM), L"WAVE");
+
 
 	//init game values
 	GameState = GS_NO_GAME;
@@ -247,7 +253,7 @@ void CAppWnd::OnRotateRight()
 }
 void CAppWnd::OnDrop()
 {
-	if(GameState == GS_RUNNING)
+	if (GameState == GS_RUNNING)
 		GameField.OnDrop();
 }
 void CAppWnd::Pause(bool pause)

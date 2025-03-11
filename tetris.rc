@@ -144,6 +144,15 @@ END
 // remains consistent on all systems.
 ID_MAIN_ICON            ICON                    "ID_MAIN_ICON.ico"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BACKGROUND          BITMAP                  "res\\Background.bmp"
+
+
 #endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////
 

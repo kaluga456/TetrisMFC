@@ -48,19 +48,14 @@ void CTextView::DrawText(CDC* dc)
 	dc->FillSolidRect(&Rect, NULL);
 	dc->SetBkColor(COLOR_BLACK);
 	CFont* old_font = dc->SelectObject(&Font);
-	dc->SetTextColor(RGB(72,207,69));
+	dc->SetTextColor(RGB(200, 150, 50));
 	dc->DrawText(Text, &Rect, DT_CENTER|DT_SINGLELINE);
 	dc->SelectObject(old_font);
 }
 void CTextView::SetText(const CString& text)
 {
 	Text = text;
-	CDC* dc = ParentWnd->GetDC();
-	if(dc)
-	{
-		DrawText(dc);
-		ParentWnd->ReleaseDC(dc);
-	}
+	RePaint();
 }
 void CTextView::SetText(int i)
 {
@@ -137,6 +132,28 @@ CGameFieldView::CGameFieldView(CWnd* parent, int x, int y, const CGameField* gam
 		DEFAULT_QUALITY,           // nQuality
 		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
 		_T("Comic Sans MS"));      // lpszFacename
+
+	//game field bitmap background
+	if (Backgorund.LoadBitmap(IDB_BACKGROUND))
+	{
+		Backgorund.GetBitmap(&BgInfo);
+
+		CDC* dc = ParentWnd->GetDC();
+		BgMemory.CreateCompatibleDC(dc);
+		ParentWnd->ReleaseDC(dc);
+
+		BgMemory.SelectObject(&Backgorund);
+	}
+
+}
+void CGameFieldView::DrawBackground(CDC* dc)
+{
+	if (NULL == Backgorund.m_hObject)
+	{
+		dc->FillSolidRect(&Rect, NULL);
+		return;
+	}
+	dc->StretchBlt(Rect.left, Rect.top, Rect.Width(), Rect.Height(), &BgMemory, 0, 0, BgInfo.bmWidth, BgInfo.bmHeight, SRCCOPY);
 }
 void CGameFieldView::DrawBlock(CDC* dc, int x, int y, COLORREF color)
 {
@@ -164,7 +181,7 @@ void CGameFieldView::PaintText(CDC* dc, CString text)
 }
 void CGameFieldView::OnPaint(CDC* dc)
 {
-	dc->FillSolidRect(&Rect, NULL);
+	DrawBackground(dc);
 	
 	COLORREF color;
 	for(int x = 0; x < GAME_FIELD_WIDTH; ++x)
@@ -188,6 +205,12 @@ void CGameFieldView::OnNewGame()
 }
 void CGameFieldView::OnShapeMove()
 {
+	if (Backgorund.m_hObject)
+	{
+		RePaint();
+		return;
+	}
+
 	CDC* dc = ParentWnd->GetDC();
 	//erase previous shape
 	PaintShape(dc, PrevShape, NULL);
@@ -199,6 +222,12 @@ void CGameFieldView::OnShapeMove()
 }
 void CGameFieldView::OnShapeLanded()
 {
+	if (Backgorund.m_hObject)
+	{
+		RePaint();
+		return;
+	}
+
 	CDC* dc = ParentWnd->GetDC();
 	//paint current shape
 	PaintShape(dc, GameField->GetCurrentShape(), GameField->GetCurrentShape().GetContext());

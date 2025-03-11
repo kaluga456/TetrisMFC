@@ -248,6 +248,7 @@ bool CGameField::TestMove(int type, bool move)
 		ASSERT(0);	//move type is undefined
 		return false;
 	}
+
 	if(CheckShape(new_shape))
 	{
 		if(move)
