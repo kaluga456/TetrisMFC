@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #pragma hdrstop
 #include "resource.h"
+#include "random.h"
 #include "about.h"
 #include "options.h"
 #include "statistics.h"
@@ -14,8 +15,9 @@
 
 extern COptions Options;
 extern CStatistic Statistics;
-extern CAppWnd* pAppWnd;
-
+//extern CTetrisApp TetrisApp;
+extern CAppWnd* AppWnd;
+static app::random_value<int> RandomColor(100, 255);
 
 BEGIN_MESSAGE_MAP(CAppWnd, CWnd)
 	ON_WM_PAINT()
@@ -39,11 +41,11 @@ CAppWnd::CAppWnd() : CFrameWnd()
 	LPCTSTR wndclass;
 	try
 	{
-		wndclass = AfxRegisterWndClass(
+		wndclass = ::AfxRegisterWndClass(
 			CS_HREDRAW | CS_VREDRAW, 
 			::LoadCursor(NULL, IDC_ARROW), 
 			(HBRUSH)(COLOR_BTNFACE+1),
-			::LoadIcon(NULL, MAKEINTRESOURCE(ID_MAIN_ICON)));
+			::LoadIcon(::AfxGetInstanceHandle(), MAKEINTRESOURCE(ID_MAIN_ICON)));
 	}
 	catch(CResourceException* pEx)
 	{
@@ -68,43 +70,43 @@ CAppWnd::CAppWnd() : CFrameWnd()
 
 	//init game values
 	GameState = GS_NO_GAME;
-	GameField.Initialize(EventsProcedure);
+	GameField.Initialize(GetBLockContext, EventsProcedure);
 
 	//init timers
 	ClockTimer.SetParent(m_hWnd);
 	MoveKeyTimer.SetParent(m_hWnd);
 
 	//create controls
-	GameFieldView = new CGameFieldView(this, 
-		APPWND_PADDING, 
-		APPWND_PADDING, &GameField);
 	NextShapeView = new CNextShapeView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING,
+		APPWND_PADDING,
 		APPWND_PADDING );
 	LinesLabel = new CTextView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING, 
-		NEXT_SHAPE_VIEW_HEIGHT + 1*APPWND_PADDING + 1*TEXT_VIEW_HEIGHT, 
+		APPWND_PADDING, 
+		NextShapeView->Bottom() + APPWND_PADDING,
 		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"LINES");
 	LinesView = new CTextView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING, 
-		NEXT_SHAPE_VIEW_HEIGHT + 1*APPWND_PADDING + 2*TEXT_VIEW_HEIGHT, 
+		APPWND_PADDING, 
+		LinesLabel->Bottom(),
 		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
 	SpeedLabel = new CTextView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING, 
-		NEXT_SHAPE_VIEW_HEIGHT + 3*APPWND_PADDING + 3*TEXT_VIEW_HEIGHT, 
+		APPWND_PADDING, 
+		LinesView->Bottom() + APPWND_PADDING,
 		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"SPEED");
 	SpeedView = new CTextView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING, 
-		NEXT_SHAPE_VIEW_HEIGHT + 3*APPWND_PADDING + 4*TEXT_VIEW_HEIGHT, 
+		APPWND_PADDING, 
+		SpeedLabel->Bottom(),
 		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
 	TimeLabel = new CTextView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING, 
-		NEXT_SHAPE_VIEW_HEIGHT + 5*APPWND_PADDING + 5*TEXT_VIEW_HEIGHT, 
+		APPWND_PADDING, 
+		SpeedView->Bottom() + APPWND_PADDING,
 		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"TIME");
 	TimeView = new CTextView(this, 
-		APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING, 
-		NEXT_SHAPE_VIEW_HEIGHT + 5*APPWND_PADDING + 6*TEXT_VIEW_HEIGHT, 
+		APPWND_PADDING, 
+		TimeLabel->Bottom(),
 		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
+	GameFieldView = new CGameFieldView(this,
+		APPWND_PADDING + NextShapeView->Width() + APPWND_PADDING,
+		APPWND_PADDING, &GameField);
 }
 CAppWnd::~CAppWnd()
 {
@@ -117,25 +119,35 @@ CAppWnd::~CAppWnd()
 	delete GameFieldView;
 	delete NextShapeView;
 }
+block_t CAppWnd::GetBLockContext()
+{
+	const int r = RandomColor.get();
+	const int g = RandomColor.get();
+	const int b = RandomColor.get();
+	return static_cast<block_t>(RGB(r, g, b));
+}
 void CAppWnd::EventsProcedure(int event, int param)
 {
-	ASSERT(pAppWnd);
+	ASSERT(AppWnd);
 	switch(event)
 	{
 	case CGameField::ON_NEW_SHAPE:
-		pAppWnd->OnNewShape();
+		AppWnd->OnNewShape();
 		break;
 	case CGameField::ON_SHAPE_MOVE:
-		pAppWnd->OnShapeMove();
+		AppWnd->OnShapeMove();
 		break;
 	case CGameField::ON_SHAPE_LANDED:
-		pAppWnd->OnShapeLanded();
+		AppWnd->OnShapeLanded();
+		break;
+	case CGameField::ON_LINE_DELETE:
+		AppWnd->OnLineDelete(param);
 		break;
 	case CGameField::ON_LINES_DELETE:
-		pAppWnd->OnLinesDelete(param);
+		AppWnd->OnLinesDelete(param);
 		break;
 	case CGameField::ON_GAME_OVER:
-		pAppWnd->OnGameOver();
+		AppWnd->OnGameOver();
 		break;
 	}
 }
@@ -151,35 +163,45 @@ void CAppWnd::OnShapeLanded()
 {
 	GameFieldView->OnShapeLanded();	
 }
+void CAppWnd::OnLineDelete(int y_coord)
+{
+	//TEST:
+	//++LinesCount;
+	//GameFieldView->RePaint();
+	//LinesView->SetText(LinesCount);
+}
 void CAppWnd::OnLinesDelete(int lines_count)
 {
+	LinesCount += lines_count;
 	GameFieldView->OnLinesDelete();
-	LinesView->SetText(GameField.GetLinesCount());
-	CString s;
-	s.Format(_T("+%d%%"), GameField.GetBonusPercent());
-	SpeedView->SetText(s);
+	LinesView->SetText(LinesCount);
 }
 void CAppWnd::OnGameOver()
 {
 	ClockTimer.Kill();
 	GameState = GS_GAME_OVER;
 	GameFieldView->OnGameOver();
-	if(GameField.Score > Statistics.GetWorstScore())	//add player to statistics
+	if(LinesCount > Statistics.GetWorstScore())	//add player to statistics
 	{
 		CString player;
 		CStatisticRecord record;
 		CPlayerNameDlg dlg(this);
 		dlg.DoModal();
 		record.PlayerName = dlg.PlayerName;
-		record.Score = GameField.Score;
-		record.Lines = GameField.LinesCount;
-		record.Bonus = GameField.BonusPercent;
-		record.Time = GameTimer.GetGameSpan();
-		record.Date = GameTimer.GetStartTime();
+		record.Lines = LinesCount;
+
+		//TODO:
+		record.Score = 0;
+		record.Bonus = 0;
+
+		record.Time = GameTime.Get();
+		record.Date = CTime::GetCurrentTime();
+
 		Statistics.AddRecord(record);
 		CStatisticsDlg statdlg(this);
 		statdlg.DoModal();
 	}
+	LinesCount = 0;
 }
 void CAppWnd::OnPaint()
 {
@@ -195,7 +217,7 @@ void CAppWnd::OnPaint()
 }
 void CAppWnd::OnNewGame()
 {
-	if (false == QueryFinishCurrentGame())
+	if (false == QueryEndGame())
 		return;
 
 	//init timers
@@ -204,10 +226,10 @@ void CAppWnd::OnNewGame()
 	TCTime.Start(ticks, UPDATE_INTERVAL);
 	TCTick.Start(ticks, MAX_TICK_INTERVAL);
 	GameTime.Start(ticks);
-		
+	
+	LinesCount = 0;
 	GameField.OnNewGame();
 	GameFieldView->OnNewGame();
-	NextShapeView->OnPause(false);
 	GameState = GS_RUNNING;
 	LinesView->SetText(L"0");
 	SpeedView->SetText(L"+0%");
@@ -216,12 +238,12 @@ void CAppWnd::OnNewGame()
 void CAppWnd::OnRotateLeft()
 {
 	if(GameState == GS_RUNNING)
-		GameField.OnShapeMove(MT_ROTATE_LEFT);
+		GameField.OnMoveShape(MT_ROTATE_LEFT);
 }
 void CAppWnd::OnRotateRight()
 {
 	if(GameState == GS_RUNNING)
-		GameField.OnShapeMove(MT_ROTATE_RIGHT);
+		GameField.OnMoveShape(MT_ROTATE_RIGHT);
 }
 void CAppWnd::OnDrop()
 {
@@ -232,11 +254,10 @@ void CAppWnd::Pause(bool pause)
 {
 	if((GameState == GS_PAUSED)||(GameState == GS_RUNNING))
 	{
+		const DWORD ticks = ::GetTickCount();
 		if (pause)
 		{
 			GameState = GS_PAUSED;
-
-			const DWORD ticks = ::GetTickCount();
 			GameTime.Pause(ticks);
 			TCTime.Pause(ticks);
 			TCTick.Pause(ticks);
@@ -244,15 +265,13 @@ void CAppWnd::Pause(bool pause)
 		else
 		{
 			GameState = GS_RUNNING;
-
-			const DWORD ticks = ::GetTickCount();
 			GameTime.Resume(ticks);
 			TCTime.Resume(ticks);
 			TCTick.Resume(ticks);
 		}
-		GameTimer.OnPause(pause);
+
+		//TODO:
 		GameFieldView->OnPause(pause);
-		NextShapeView->OnPause(pause);
 	}
 }
 void CAppWnd::OnPause()
@@ -284,7 +303,7 @@ void CAppWnd::OnTimer(UINT_PTR nIDEvent)
 		}
 		if (TCTick.Check(ticks))
 		{
-			GameField.OnTimer();
+			GameField.OnTick();
 		}
 
 		break;
@@ -293,7 +312,7 @@ void CAppWnd::OnTimer(UINT_PTR nIDEvent)
 	{
 		//TODO: 3 timers for each move
 		if (GS_RUNNING == GameState)
-			GameField.OnShapeMove(MoveKeyTimer.GetMoveType());
+			GameField.OnMoveShape(MoveKeyTimer.GetMoveType());
 		break;
 	}
 	}
@@ -309,7 +328,7 @@ void CAppWnd::Exit()
 
 	CFrameWnd::OnClose();
 }
-bool CAppWnd::QueryFinishCurrentGame() const
+bool CAppWnd::QueryEndGame() const
 {
 	if((GameState == GS_PAUSED)||(GameState == GS_RUNNING))
 	{
@@ -323,7 +342,7 @@ void CAppWnd::OnExit()
 {
 	if((GameState == GS_PAUSED)||(GameState == GS_RUNNING))
 	{
-		if(QueryFinishCurrentGame())
+		if(QueryEndGame())
 			Exit();
 	}
 	else
@@ -346,7 +365,7 @@ void CAppWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		else
 		{
 			if(MoveKeyTimer.OnKeyDown(nChar)) //make first move immediately
-				GameField.OnShapeMove(MoveKeyTimer.GetMoveType());
+				GameField.OnMoveShape(MoveKeyTimer.GetMoveType());
 		}
 	}
 	CFrameWnd::OnKeyDown(nChar, nRepCnt, nFlags);

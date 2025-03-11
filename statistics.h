@@ -19,7 +19,7 @@ public:
 	CStatistic();
 	~CStatistic();
 
-	int GetWorstScore() const {return Data[BEST_PLAYERS_MAX_COUNT - 1].Score;}
+	int GetWorstScore() const {return Data[BEST_PLAYERS_MAX_COUNT - 1].Lines;}
 	void AddRecord(const CStatisticRecord& record);
 	void GetRecord(int index, CStatisticRecord& record) const;
 

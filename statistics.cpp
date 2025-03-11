@@ -45,7 +45,7 @@ void CStatistic::AddRecord(const CStatisticRecord& record)
 	if(record.Score <= GetWorstScore())
 		return;
 	int insert_index = -1;
-	for(size_t i = 0; i < BEST_PLAYERS_MAX_COUNT; ++i)
+	for(int i = 0; i < BEST_PLAYERS_MAX_COUNT; ++i)
 	{
 		if(record.Score > Data[i].Score)
 		{

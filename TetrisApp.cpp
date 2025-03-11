@@ -12,13 +12,13 @@
 COptions Options;
 CStatistic Statistics;
 CTetrisApp TetrisApp;
-CAppWnd* pAppWnd;
+CAppWnd* AppWnd;
 
 BOOL CTetrisApp::InitInstance()
 {
 	Options.Read(m_pszProfileName);
     m_pMainWnd = new CAppWnd;
-	pAppWnd = STATIC_DOWNCAST(CAppWnd, m_pMainWnd);
+	AppWnd = STATIC_DOWNCAST(CAppWnd, m_pMainWnd);
 	m_pMainWnd->ShowWindow(m_nCmdShow);
     m_pMainWnd->UpdateWindow();
 	hAccelTable = LoadAccelerators(m_hInstance, (LPCTSTR)IDR_ACCELERATOR);

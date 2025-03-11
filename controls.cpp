@@ -12,7 +12,7 @@ CControl::CControl(CWnd* parent, int x, int y, int width, int height)
 	Rect.right = x + width;
 	Rect.bottom = y + height;
 }
-void CControl::ControlToParent(CRect& r)
+void CControl::ControlToParent(CRect& r) const
 {
 	r.left = Rect.left + r.left;
 	r.right = Rect.left + r.right;
@@ -25,13 +25,13 @@ void CControl::RePaint()
 	ParentWnd->UpdateWindow();
 }
 CTextView::CTextView(CWnd* parent, int x, int y, int width, int height, 
-	const CString& text) : CControl(parent, x, y, width, height)
+	const LPCWSTR text /*= nullptr*/) : CControl(parent, x, y, width, height), Text(text ? text : L"")
 {
 	Font.CreateFont(	30,                        // nHeight
 						0,                         // nWidth
 						0,                         // nEscapement
 						0,                         // nOrientation
-						FW_BOLD,					// nWeight
+						FW_BOLD,				   // nWeight
 						FALSE,                     // bItalic
 						FALSE,                     // bUnderline
 						0,                         // cStrikeOut
@@ -40,8 +40,7 @@ CTextView::CTextView(CWnd* parent, int x, int y, int width, int height,
 						CLIP_DEFAULT_PRECIS,       // nClipPrecision
 						DEFAULT_QUALITY,           // nQuality
 						DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-						_T("Comic Sans MS"));          // lpszFacename
-	Text = text;
+						_T("Comic Sans MS"));      // lpszFacename
 }
 void CTextView::DrawText(CDC* dc)
 {
@@ -49,7 +48,7 @@ void CTextView::DrawText(CDC* dc)
 	dc->FillSolidRect(&Rect, NULL);
 	dc->SetBkColor(COLOR_BLACK);
 	CFont* old_font = dc->SelectObject(&Font);
-	dc->SetTextColor(RGB(255,0,0));
+	dc->SetTextColor(RGB(72,207,69));
 	dc->DrawText(Text, &Rect, DT_CENTER|DT_SINGLELINE);
 	dc->SelectObject(old_font);
 }
@@ -93,12 +92,12 @@ void CNextShapeView::DrawBlock(CDC* dc, int x, int y)
 {
 	ASSERT(dc);
 	CRect r;
-	r.SetRect(	Spacing + x*NEXT_SHAPE_BLOCK_SIZE + 1, 
-				Spacing + y*NEXT_SHAPE_BLOCK_SIZE + 1, 
-				Spacing + x*NEXT_SHAPE_BLOCK_SIZE + NEXT_SHAPE_BLOCK_SIZE - 1, 
-				Spacing + y*NEXT_SHAPE_BLOCK_SIZE + NEXT_SHAPE_BLOCK_SIZE - 1);
+	r.SetRect(	Spacing + x * NEXT_SHAPE_BLOCK_SIZE + 1, 
+				Spacing + y * NEXT_SHAPE_BLOCK_SIZE + 1, 
+				Spacing + x * NEXT_SHAPE_BLOCK_SIZE + NEXT_SHAPE_BLOCK_SIZE - 1, 
+				Spacing + y * NEXT_SHAPE_BLOCK_SIZE + NEXT_SHAPE_BLOCK_SIZE - 1);
 	ControlToParent(r);
-	dc->FillSolidRect(&r, Shape.GetColor());
+	dc->FillSolidRect(&r, Shape.GetContext());
 	dc->Draw3dRect(&r, COLOR_WHITE, COLOR_BLACK);
 }
 void CNextShapeView::SetShape(const CShape& shape)
@@ -120,12 +119,7 @@ void CNextShapeView::OnPaint(CDC* dc)
 		DrawBlock(dc, block.X, block.Y);
 	}
 }
-void CNextShapeView::OnPause(bool pause)
-{
-	ShowShape = !pause;
-	RePaint();
-}
-CGameFieldView::CGameFieldView(CWnd* parent, int x, int y, CGameField* game_field) : 
+CGameFieldView::CGameFieldView(CWnd* parent, int x, int y, const CGameField* game_field) :
 	CControl(parent, x, y, GAME_FIELD_VIEW_WIDTH, GAME_FIELD_VIEW_HEIGHT), GameField{game_field}, State{GS_NO_GAME}
 {
 	ASSERT(game_field);
@@ -158,7 +152,7 @@ void CGameFieldView::DrawBlock(CDC* dc, int x, int y, COLORREF color)
 void CGameFieldView::PaintShape(CDC* dc, const CShape& shape, COLORREF color)
 {
 	ASSERT(dc);
-	for(int i=0;i<shape.GetBlocksCount();i++)
+	for(int i = 0; i < shape.GetBlocksCount(); ++i)
 		DrawBlock(dc, shape.GetBlockPoint(i, false).X, shape.GetBlockPoint(i, false).Y, color);
 }
 void CGameFieldView::PaintText(CDC* dc, CString text)
@@ -198,7 +192,7 @@ void CGameFieldView::OnShapeMove()
 	//erase previous shape
 	PaintShape(dc, PrevShape, NULL);
 	//paint current shape
-	PaintShape(dc, GameField->GetCurrentShape(), GameField->GetCurrentShape().GetColor());
+	PaintShape(dc, GameField->GetCurrentShape(), GameField->GetCurrentShape().GetContext());
 	//save shape
 	PrevShape.Assign(GameField->GetCurrentShape());
 	ParentWnd->ReleaseDC(dc);
@@ -207,7 +201,7 @@ void CGameFieldView::OnShapeLanded()
 {
 	CDC* dc = ParentWnd->GetDC();
 	//paint current shape
-	PaintShape(dc, GameField->GetCurrentShape(), GameField->GetCurrentShape().GetColor());
+	PaintShape(dc, GameField->GetCurrentShape(), GameField->GetCurrentShape().GetContext());
 	//no prev shapes expected
 	PrevShape.Clear();
 	ParentWnd->ReleaseDC(dc);

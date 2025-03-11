@@ -1,10 +1,5 @@
 #pragma once
 
-constexpr UINT ACCELERATION = 3;
-constexpr UINT APPWND_PADDING = 8;
-constexpr UINT APPWND_WIDTH = (APPWND_PADDING + GAME_FIELD_VIEW_WIDTH + APPWND_PADDING + TEXT_VIEW_WIDTH + APPWND_PADDING);
-constexpr UINT APPWND_HEIGHT = (APPWND_PADDING + GAME_FIELD_VIEW_HEIGHT + APPWND_PADDING);
-
 class CAppWnd : public CFrameWnd
 {
 DECLARE_MESSAGE_MAP ()
@@ -12,12 +7,15 @@ public:
 	CAppWnd();
 	~CAppWnd();
 
+	//callbacks
 	static void EventsProcedure(int event, int param);
+	static block_t GetBLockContext();
 
 	//GameField event handlers
 	void OnNewShape();
 	void OnShapeMove();
 	void OnShapeLanded();
+	void OnLineDelete(int y_coord);
 	void OnLinesDelete(int lines_count);
 	void OnGameOver();
 
@@ -42,14 +40,15 @@ private:
 	CMoveKeyTimer MoveKeyTimer;
 	CTimer ClockTimer{ CLOCK_TIMER_ID };
 
-	//DEPRECATE:
-	CGameTimer GameTimer;
-
 	//counters
 	CGameTime GameTime; //time counter
 	CTickCounter TCTime;  //time view update
 	CGameTick TCTick;  //game tick event
 
+	//statistics
+	int LinesCount{ 0 };
+
+	//logic
 	int GameState{GS_NO_GAME};
 	CGameField GameField;
 
@@ -64,6 +63,6 @@ private:
 	CNextShapeView* NextShapeView;
 
 	void Pause(bool pause);
-	bool QueryFinishCurrentGame() const;
+	bool QueryEndGame() const;
 	void Exit();
 };

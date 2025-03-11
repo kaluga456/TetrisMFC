@@ -165,6 +165,7 @@
     <ClCompile Include="options.cpp" />
     <ClCompile Include="OptionsDlg.cpp" />
     <ClCompile Include="PlayerNameDlg.cpp" />
+    <ClCompile Include="random.cpp" />
     <ClCompile Include="statistics.cpp" />
     <ClCompile Include="StatisticsDlg.cpp" />
     <ClCompile Include="stdafx.cpp" />

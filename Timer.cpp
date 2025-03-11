@@ -111,29 +111,3 @@ void CMoveKeyTimer::OnKeyUp(UINT key)
 	Kill();
 	Key = 0;
 }
-
-void CGameTimer::OnNewGame()
-{
-	StartTime = CTime::GetCurrentTime();
-	PauseSpan = 0;
-}
-void CGameTimer::OnPause(bool pause)
-{
-	if (pause)	//pause
-		PauseTime = CTime::GetCurrentTime();
-	else		//resume
-		PauseSpan += CTime::GetCurrentTime() - PauseTime;
-}
-CTimeSpan CGameTimer::GetGameSpan() const
-{
-	return CTime::GetCurrentTime() - PauseSpan - StartTime;
-}
-CTime CGameTimer::GetStartTime() const
-{
-	return StartTime;
-}
-CString CGameTimer::GetGameSpanString() const
-{
-	CTimeSpan game_span = CTime::GetCurrentTime() - PauseSpan - StartTime;
-	return game_span.Format("%M:%S");
-}

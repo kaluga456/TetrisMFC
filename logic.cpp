@@ -3,15 +3,11 @@
 #include "random.h"
 #include "logic.h"
 
-static app::random_value<int> RandomColor(100, 255);
-static COLORREF GetRandomColor()
-{
-	const int r = RandomColor.get();
-	const int g = RandomColor.get();
-	const int b = RandomColor.get();
-	return RGB(r, g, b);
-}
+#ifndef ASSERT
+#define ASSERT assert
+#endif
 
+//shape types
 enum : int
 {
 	SHAPE_TYPE_LINE = 0,
@@ -24,28 +20,24 @@ enum : int
 
 	SHAPE_TYPE_COUNT
 };
-
-const Point SHAPES[SHAPE_TYPE_COUNT][SHAPE_BLOCKS_COUNT] =
-{
-	{ {1,0}, {1,1},  {1,2},  {1,3} } //TYPE_LINE
-	//TYPE_T
-};
-
 static app::random_value<int> RandomShape(0, SHAPE_TYPE_COUNT - 1);
+
 void CShape::Assign(const CShape& shape)
 {
 	Size = shape.GetSize();
 	BlocksCount = shape.GetBlocksCount();
-	Color = shape.GetColor();
+	Context = shape.GetContext();
 	Pos = shape.Pos;
 	for(int i = 0; i < BlocksCount; ++i)
 		Blocks[i] = shape.GetBlockPoint(i, true);
 }
-void CShape::Generate(const Point& p)
+void CShape::Generate(const Point& p, block_t context)
 {
 	Pos = p;
+
 	//create shape
-	BlocksCount = 4;
+	BlocksCount = SHAPE_BLOCKS_COUNT;
+	Context = context;
 	switch(RandomShape.get())
 	{
 		case SHAPE_TYPE_LINE:
@@ -98,17 +90,15 @@ void CShape::Generate(const Point& p)
 			Blocks[3] = {1,2};
 			break;
 		default:
-			ASSERT(FALSE);
+			ASSERT(0);
 	}
-
-	Color = GetRandomColor();
 }
-COLORREF CShape::GetBlockAt(const Point& p) const
+block_t CShape::GetBlockAt(const Point& p) const
 {
 	for (size_t i = 0; i < BlocksCount; ++i)
 		if (GetBlockPoint(i, false) == p)
-			return Color;
-	return NO_BLOCK;
+			return Context;
+	return BLOCK_NONE;
 }
 Point CShape::GetBlockPoint(size_t block_index, bool relative) const
 {
@@ -117,7 +107,7 @@ Point CShape::GetBlockPoint(size_t block_index, bool relative) const
 		return Point(Blocks[block_index].X, Blocks[block_index].Y);
 	return Point(Blocks[block_index].X + Pos.X, Blocks[block_index].Y + Pos.Y);
 }
-void CShape::Rotate(UINT direction)
+void CShape::Rotate(int direction)
 {
 	ASSERT((MT_ROTATE_LEFT == direction) || (MT_ROTATE_RIGHT == direction));
 	
@@ -137,30 +127,82 @@ void CShape::Rotate(UINT direction)
 		Blocks[i] = new_block;
 	}
 }
+
+bool CGameField::CCallbackBlock::Blocked = false;
+
+CGameField::CGameField() :	callback_GetBLockContext{ nullptr }, 
+							callback_EventProc{ nullptr }
+{
+	Clear();
+}
+CGameField::~CGameField()
+{
+}
 void CGameField::Clear()
 {
 	for(size_t x = 0; x < GAME_FIELD_WIDTH; ++x)
 		for(size_t y = 0; y < GAME_FIELD_HEIGHT; ++y)
-			Blocks[x][y] = NO_BLOCK;
+			Blocks[x][y] = BLOCK_NONE;
 }
-void CGameField::Initialize(EVENTPROC event_proc)
+void CGameField::Initialize(FGetBlockContext get_block_context, FEventProc event_proc)
 {
-	ASSERT(event_proc);
-	EventProc = event_proc;
+	callback_GetBLockContext = get_block_context;
+	callback_EventProc = event_proc;
 	Clear();
-	Score = 0;
-	LinesCount = 0;
-	BonusPercent = 0;
 }
-void CGameField::OnNewGame()
+block_t CGameField::GetBLockContext() const
 {
+	if (nullptr == callback_GetBLockContext)
+		return BLOCK_DEFAULT;
+
+	CCallbackBlock cb;
+	return callback_GetBLockContext();
+}
+void CGameField::EventProc(int event, int param /*= 0*/) const
+{
+	if (nullptr == callback_EventProc)
+		return;
+
+	CCallbackBlock cb;
+	callback_EventProc(event, param);
+}
+block_t CGameField::GetBlockAt(int x, int y) const
+{
+	if (Blocks[x][y])
+		return Blocks[x][y];
+	return CurrentShape.GetBlockAt(Point(x, y));
+}
+int CGameField::OnNewGame()
+{
+	if (CCallbackBlock::IsBlocked())
+		return RESULT_BLOCKED;
 	Clear();
-	NextShape.Generate(Point(5, 0));
+	NextShape.Generate(Point(GAME_FIELD_WIDTH / 2 - 1, 0), GetBLockContext());
 	CShape new_shape;
-	TestMove(MT_NEW_SHAPE, true, new_shape);
-	Score = 0;
-	LinesCount = 0;
-	BonusPercent = 0;
+	TestMove(MT_NEW_SHAPE, true);
+	return RESULT_OK;
+}
+int CGameField::OnMoveShape(int type)
+{
+	if (CCallbackBlock::IsBlocked())
+		return RESULT_BLOCKED;
+	if (MT_UNDEFINED == type)
+		return RESULT_FAIL;
+	TestMove(type, true);
+	return RESULT_OK;
+}
+int CGameField::OnDrop()
+{
+	if (CCallbackBlock::IsBlocked())
+		return RESULT_BLOCKED;
+	CShape new_shape;
+	while (TestMove(MT_MOVE_DOWN, true))
+		;
+	return RESULT_OK;
+}
+int CGameField::OnTick()
+{
+	return OnMoveShape(MT_MOVE_DOWN);
 }
 bool CGameField::CheckShape(const CShape& shape) const
 {
@@ -175,8 +217,9 @@ bool CGameField::CheckShape(const CShape& shape) const
 	}
 	return true;
 }
-bool CGameField::TestMove(int type, bool move, CShape& new_shape)
+bool CGameField::TestMove(int type, bool move)
 {
+	CShape new_shape;
 	if(type != MT_NEW_SHAPE)
 		new_shape.Assign(CurrentShape);
 
@@ -184,7 +227,7 @@ bool CGameField::TestMove(int type, bool move, CShape& new_shape)
 	{
 	case MT_NEW_SHAPE:
 		new_shape.Assign(NextShape);
-		NextShape.Generate(Point(5, 0));
+		NextShape.Generate(Point(5, 0), GetBLockContext());
 		break;
 	case MT_MOVE_LEFT:
 		new_shape.Pos.X = CurrentShape.Pos.X - 1;
@@ -202,7 +245,7 @@ bool CGameField::TestMove(int type, bool move, CShape& new_shape)
 		new_shape.Rotate(MT_ROTATE_RIGHT);
 		break;
 	default:
-		ASSERT(FALSE);	//move type is undefined
+		ASSERT(0);	//move type is undefined
 		return false;
 	}
 	if(CheckShape(new_shape))
@@ -211,101 +254,68 @@ bool CGameField::TestMove(int type, bool move, CShape& new_shape)
 		{
 			CurrentShape.Assign(new_shape);
 			if(type == MT_NEW_SHAPE)
-				EventProc(ON_NEW_SHAPE, NULL);
-			EventProc(ON_SHAPE_MOVE, NULL);
+				EventProc(ON_NEW_SHAPE);
+			EventProc(ON_SHAPE_MOVE);
 		}
 		return true;
 	}
 	if(type == MT_MOVE_DOWN)
 		ShapeLanded();
 	else if(type == MT_NEW_SHAPE)
-		EventProc(ON_GAME_OVER, NULL);
+		EventProc(ON_GAME_OVER);
 	return false;
-}
-void CGameField::OnShapeMove(UINT type)
-{
-	if (MT_UNDEFINED == type)
-		return;
-	CShape new_shape;
-	TestMove(type, true, new_shape);
-}
-void CGameField::ShapeLanded()	//called after each shape changing
-{
-	EventProc(ON_SHAPE_LANDED, NULL);	//paint landed shape first
-	//fix landed shape
-	for(int i = 0;i < CurrentShape.GetBlocksCount(); ++i)
-	{
-		ASSERT((CurrentShape.GetBlockPoint(i, false).X >= 0) && (CurrentShape.GetBlockPoint(i, false).X < GAME_FIELD_WIDTH));
-		ASSERT((CurrentShape.GetBlockPoint(i, false).Y >= 0) && (CurrentShape.GetBlockPoint(i, false).Y < GAME_FIELD_HEIGHT));
-		Blocks[CurrentShape.GetBlockPoint(i, false).X][CurrentShape.GetBlockPoint(i, false).Y] = CurrentShape.GetColor();
-	}
-	//check for solid lines
-	int solid_lines[SHAPE_BLOCKS_COUNT];
-	int solid_lines_count = 0;
-	for(int y = 0; y < GAME_FIELD_HEIGHT; ++y)
-	{
-		if(IsLineSolid(y))
-		{
-			solid_lines[solid_lines_count] = y;
-			++solid_lines_count;
-			ASSERT(solid_lines_count <= SHAPE_BLOCKS_COUNT);
-		}
-	}
-	CurrentShape.Clear();	//painting wotkarround
-
-	//cut solid lines
-	for(int i = 0;i < solid_lines_count; ++i)
-		EraseLine(solid_lines[i]);
-	if(solid_lines_count)
-	{
-		if(solid_lines_count < 1 || solid_lines_count > 5)
-			return;
-		LinesCount += solid_lines_count;
-		switch(solid_lines_count)
-		{
-		case 1:
-			Score += 1;
-			break;
-		case 2:
-			Score += 3;
-			break;
-		case 3:
-			Score += 5;
-			break;
-		case 4:
-			Score += 7;
-			break;
-		case 5:
-			Score += 9;
-			break;
-		}
-		BonusPercent = (Score - LinesCount)*100 / LinesCount;
-		EventProc(ON_LINES_DELETE, NULL);
-	}
-	//create next shape
-	CShape new_shape;
-	TestMove(MT_NEW_SHAPE, true, new_shape);
-}
-void CGameField::OnDrop()
-{
-	CShape new_shape;
-	while(TestMove(MT_MOVE_DOWN, true, new_shape))
-		;
-}
-void CGameField::OnTimer()
-{
-	OnShapeMove(MT_MOVE_DOWN);
 }
 bool CGameField::IsLineSolid(int y) const
 {
 	ASSERT(0 <= y && y <= GAME_FIELD_HEIGHT);
-	if(y < 0 || y >= GAME_FIELD_HEIGHT)
+	if (y < 0 || GAME_FIELD_HEIGHT <= y)
 		return false;
 
-	for(int x = 0; x < GAME_FIELD_WIDTH; ++x)
-		if(NO_BLOCK == Blocks[x][y])
+	for (coord_t x = 0; x < GAME_FIELD_WIDTH; ++x)
+		if (BLOCK_NONE == Blocks[x][y])
 			return false;
 	return true;
+}
+void CGameField::ShapeLanded()	//called after each shape changing
+{
+	//paint landed shape first
+	EventProc(ON_SHAPE_LANDED);
+
+	//add landed shape
+	for(int i = 0; i < CurrentShape.GetBlocksCount(); ++i)
+	{
+		ASSERT((CurrentShape.GetBlockPoint(i, false).X >= 0) && (CurrentShape.GetBlockPoint(i, false).X < GAME_FIELD_WIDTH));
+		ASSERT((CurrentShape.GetBlockPoint(i, false).Y >= 0) && (CurrentShape.GetBlockPoint(i, false).Y < GAME_FIELD_HEIGHT));
+		Blocks[CurrentShape.GetBlockPoint(i, false).X][CurrentShape.GetBlockPoint(i, false).Y] = CurrentShape.GetContext();
+	}
+	CurrentShape.Clear();
+
+	//check for solid lines
+	int solid_lines[SHAPE_BLOCKS_COUNT]{};
+	int solid_lines_count = 0;
+	for(int y = 0; y < GAME_FIELD_HEIGHT; ++y)
+	{
+		if (false == IsLineSolid(y))
+			continue;
+
+		solid_lines[solid_lines_count] = y;
+		++solid_lines_count;
+
+		//TODO:
+		//EventProc(ON_LINE_DELETE, y);
+
+		ASSERT(solid_lines_count <= SHAPE_BLOCKS_COUNT);
+	}
+
+	//remove solid lines
+	for(int i = 0; i < solid_lines_count; ++i)
+		EraseLine(solid_lines[i]);
+
+	if(solid_lines_count)
+		EventProc(ON_LINES_DELETE, solid_lines_count);
+
+	//create next shape
+	TestMove(MT_NEW_SHAPE, true);
 }
 void CGameField::EraseLine(int line_y)
 {
@@ -313,7 +323,7 @@ void CGameField::EraseLine(int line_y)
 
 	//remove line
 	for(int x = 0; x < GAME_FIELD_WIDTH; ++x)
-		Blocks[x][line_y] = NO_BLOCK;
+		Blocks[x][line_y] = BLOCK_NONE;
 
 	//move down upper blocks
 	for(int y = line_y - 1; y >= 0; --y)
@@ -321,7 +331,7 @@ void CGameField::EraseLine(int line_y)
 		for(int x = 0; x < GAME_FIELD_WIDTH; ++x)
 		{
 			Blocks[x][y + 1] = Blocks[x][y];
-			Blocks[x][y] = NO_BLOCK;
+			Blocks[x][y] = BLOCK_NONE;
 		}
 	}
 }

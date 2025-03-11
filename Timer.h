@@ -71,7 +71,6 @@ private:
 	UINT Time; //ms
 };
 
-
 //window timer
 class CTimer
 {
@@ -106,19 +105,4 @@ public:
 
 protected:
 	UINT Key{}; //pressed move key or 0
-};
-
-struct CGameTimer
-{
-public:
-	void OnNewGame();
-	void OnPause(bool pause);
-	CTimeSpan GetGameSpan() const;
-	CTime GetStartTime() const;
-	CString GetGameSpanString() const;
-
-private:
-	CTime StartTime;
-	CTime PauseTime;
-	CTimeSpan PauseSpan;
 };

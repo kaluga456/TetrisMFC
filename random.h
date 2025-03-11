@@ -1,13 +1,8 @@
 #pragma once
 
-#include <random>
-
 namespace app
 {
-	void random_seed(std::default_random_engine& dre)
-	{
-		dre.seed(static_cast<int>(std::random_device()()));
-	}
+	void random_seed(std::default_random_engine& dre);
 
 	template <typename T>
 	class random_value
