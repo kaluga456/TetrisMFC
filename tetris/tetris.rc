@@ -142,7 +142,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-ID_MAIN_ICON            ICON                    "ID_MAIN_ICON.ico"
+ID_MAIN_ICON            ICON                    "res\\ID_MAIN_ICON.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////

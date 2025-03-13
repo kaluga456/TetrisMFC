@@ -391,3 +391,4 @@ void CAppWnd::OnHighscores()
 	CStatisticsDlg dlg;
 	dlg.DoModal();
 }
+
