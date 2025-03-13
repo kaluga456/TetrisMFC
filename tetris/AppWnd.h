@@ -63,6 +63,6 @@ private:
 	CNextShapeView* NextShapeView;
 
 	void Pause(bool pause);
-	bool QueryEndGame() const;
+	bool QueryEndGame();
 	void Exit();
 };

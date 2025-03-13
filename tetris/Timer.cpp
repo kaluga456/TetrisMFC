@@ -96,8 +96,8 @@ UINT CMoveKeyTimer::GetMoveType() const
 }
 bool CMoveKeyTimer::OnKeyDown(UINT key)
 {
-	if (Timer) return false;
 	if (false == IsMoveKey(key)) return false;
+	if (Timer) return false;
 	if (key == Key) return false;
 
 	ASSERT(0 == Timer);

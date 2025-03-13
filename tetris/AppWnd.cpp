@@ -253,15 +253,15 @@ void CAppWnd::OnRotateRight()
 }
 void CAppWnd::OnDrop()
 {
-	if (GameState == GS_RUNNING)
+	if(GameState == GS_RUNNING)
 		GameField.OnDrop();
 }
 void CAppWnd::Pause(bool pause)
 {
-	if((GameState == GS_PAUSED)||(GameState == GS_RUNNING))
+	if(GS_PAUSED == GameState || GS_RUNNING == GameState)
 	{
 		const DWORD ticks = ::GetTickCount();
-		if (pause)
+		if(pause)
 		{
 			GameState = GS_PAUSED;
 			GameTime.Pause(ticks);
@@ -282,9 +282,9 @@ void CAppWnd::Pause(bool pause)
 }
 void CAppWnd::OnPause()
 {
-	if (GameState == GS_RUNNING)
+	if(GameState == GS_RUNNING)
 		Pause(true);
-	else if (GameState == GS_PAUSED)
+	else if(GameState == GS_PAUSED)
 		Pause(false);
 }
 void CAppWnd::OnTimer(UINT_PTR nIDEvent)
@@ -305,7 +305,7 @@ void CAppWnd::OnTimer(UINT_PTR nIDEvent)
 			const UINT speed = TCTick.GetSpeed();
 			CString text;
 			text.Format(L"+%u%%", speed);
-			SpeedView->SetText(text);
+			SpeedView->SetText(CString());
 		}
 		if (TCTick.Check(ticks))
 		{
@@ -334,19 +334,26 @@ void CAppWnd::Exit()
 
 	CFrameWnd::OnClose();
 }
-bool CAppWnd::QueryEndGame() const
+bool CAppWnd::QueryEndGame()
 {
-	if((GameState == GS_PAUSED)||(GameState == GS_RUNNING))
+	if(GS_PAUSED == GameState || GS_RUNNING == GameState)
 	{
-		if(AfxMessageBox(_T("Finish current game?"), MB_OKCANCEL|MB_ICONEXCLAMATION, NULL)==IDOK)
+		if(GS_RUNNING == GameState)
+			OnPause();
+
+		if (AfxMessageBox(_T("Finish current game?"), MB_OKCANCEL | MB_ICONEXCLAMATION, NULL) == IDOK)
 			return true;
+
+		if(GS_PAUSED == GameState)
+			OnPause();
+
 		return false;
 	}
 	return true;
 }
 void CAppWnd::OnExit()
 {
-	if((GameState == GS_PAUSED)||(GameState == GS_RUNNING))
+	if(GS_PAUSED == GameState || GS_RUNNING == GameState)
 	{
 		if(QueryEndGame())
 			Exit();
@@ -356,7 +363,13 @@ void CAppWnd::OnExit()
 }
 void CAppWnd::OnAbout()
 {
-	MessageBox(APP_NAME L"\nBuild: " APP_BUILD, _T("About"), MB_OK | MB_ICONINFORMATION);
+	LPCTSTR about_msg = APP_NAME L"\nBuild: " APP_BUILD\
+		L"\n\n"
+		L"Controls:\n"
+		L"Move shape:\tASD or arrow keys\n"
+		L"Rotate shape:\tW or UP\n"
+		L"Drop shape:\tSPACE\n";
+	MessageBox(about_msg, _T("About"), MB_OK | MB_ICONINFORMATION);
 }
 void CAppWnd::OnClose()
 {
@@ -364,9 +377,9 @@ void CAppWnd::OnClose()
 }
 void CAppWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	if (GS_RUNNING == GameState)
+	if(GS_RUNNING == GameState)
 	{
-		if ('W' == nChar)
+		if('W' == nChar)
 			OnRotateLeft();
 		else
 		{

@@ -193,8 +193,8 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="ID_MAIN_ICON.ico" />
     <Image Include="res\Background.bmp" />
+    <Image Include="res\ID_MAIN_ICON.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="tetris.rc" />

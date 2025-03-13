@@ -30,7 +30,7 @@ BEGIN
     VK_F4,          ID_GAME_OPTIONS,        VIRTKEY, NOINVERT
     VK_F1,          ID_HELP_HELP,           VIRTKEY, NOINVERT
     VK_F3,          ID_HIGHSCORES,          VIRTKEY, NOINVERT
-    VK_F2,          ID_NEW_GAME,            VIRTKEY, NOINVERT
+    VK_RETURN,      ID_NEW_GAME,            VIRTKEY, NOINVERT
     VK_ESCAPE,      ID_PAUSE,               VIRTKEY, NOINVERT
     VK_UP,          ID_ROTATE_LEFT,         VIRTKEY, NOINVERT
     VK_OEM_6,       ID_ROTATE_RIGHT,        VIRTKEY, NOINVERT
@@ -46,7 +46,7 @@ IDR_MAIN_MENU MENU
 BEGIN
     POPUP "&Game"
     BEGIN
-        MENUITEM "&New game\tF2",               ID_NEW_GAME
+        MENUITEM "&New game\tEnter",            ID_NEW_GAME
         MENUITEM "&Pause/Resume game\tEscape",  ID_PAUSE
         MENUITEM "&Options...\tF4",             ID_GAME_OPTIONS
         MENUITEM SEPARATOR
@@ -151,7 +151,6 @@ ID_MAIN_ICON            ICON                    "res\\ID_MAIN_ICON.ico"
 //
 
 IDB_BACKGROUND          BITMAP                  "res\\Background.bmp"
-
 
 #endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////
