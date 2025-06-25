@@ -131,6 +131,8 @@ CAppWnd::CAppWnd() : CFrameWnd()
 	//}
 
 	UpdateScoresList();
+
+	::AfxSetWindowText(m_hWnd, APP_FULL_NAME);
 }
 CAppWnd::~CAppWnd()
 {
@@ -398,7 +400,7 @@ void CAppWnd::OnExit()
 }
 void CAppWnd::OnAbout()
 {
-	LPCTSTR about_msg = APP_NAME L"\nBuild: " APP_BUILD\
+	LPCTSTR about_msg = APP_FULL_NAME \
 		L"\n\n"
 		L"Controls:\n"
 		L"Move shape:\tASD or arrow keys\n"
