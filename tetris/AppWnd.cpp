@@ -324,7 +324,7 @@ void CAppWnd::OnTimer(UINT_PTR nIDEvent)
 			const UINT speed = TCTick.GetSpeed();
 			CString text;
 			text.Format(L"+%u%%", speed);
-			GameTab.SpeedView->SetText(CString());
+			GameTab.SpeedView->SetText(text);
 		}
 		if (TCTick.Check(ticks))
 		{
