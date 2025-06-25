@@ -18,6 +18,8 @@ constexpr UINT APPWND_HEIGHT = (APPWND_PADDING + GAME_FIELD_VIEW_HEIGHT + APPWND
 constexpr COLORREF COLOR_WHITE = RGB(255, 255, 255);
 constexpr COLORREF COLOR_BLACK = RGB(0, 0, 0);
 
+extern CGameField GameField;
+
 class CControl
 {
 public:
@@ -96,4 +98,22 @@ private:
 	void DrawBlock(CDC* dc, int x, int y, COLORREF color);
 	void PaintText(CDC* dc, CString text);
 	void PaintShape(CDC* dc, const CShape& shape, COLORREF color);
+};
+
+class CGameControl : public CStatic
+{
+public:
+	//game controls
+	CTextView* LinesLabel;
+	CTextView* LinesView;
+	CTextView* SpeedLabel;
+	CTextView* SpeedView;
+	CTextView* TimeLabel;
+	CTextView* TimeView;
+	CGameFieldView* GameFieldView;
+	CNextShapeView* NextShapeView;
+
+	CGameControl();
+	~CGameControl();
+	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
 };

@@ -4,24 +4,22 @@
 #include "random.h"
 #include "about.h"
 #include "options.h"
-#include "statistics.h"
+#include "BestScores.h"
+#include "ScoresDB.h"
 #include "logic.h"
 #include "Timer.h"
 #include "controls.h"
-#include "StatisticsDlg.h"
-#include "PlayerNameDlg.h"
 #include "optionsdlg.h"
 #include "appwnd.h"
 
 extern COptions Options;
-extern CStatistic Statistics;
 extern CWinApp* ThisApp;
 extern CAppWnd* AppWnd;
+CGameField GameField;
 
 static app::random_value<int> RandomColor(100, 255);
 
 BEGIN_MESSAGE_MAP(CAppWnd, CWnd)
-	ON_WM_PAINT()
 	ON_COMMAND(ID_NEW_GAME, OnNewGame)
 	ON_COMMAND(ID_ROTATE_LEFT, OnRotateLeft)
 	ON_COMMAND(ID_ROTATE_RIGHT, OnRotateRight)
@@ -34,7 +32,9 @@ BEGIN_MESSAGE_MAP(CAppWnd, CWnd)
 	ON_WM_KEYDOWN()
 	ON_WM_KEYUP()
 	ON_COMMAND(ID_GAME_OPTIONS, OnGameOptions)
+	ON_COMMAND(ID_GAME_DELETESCORES, OnClearScores)
 	ON_COMMAND(ID_HIGHSCORES, OnHighscores)
+	ON_REGISTERED_MESSAGE(AFX_WM_CHANGING_ACTIVE_TAB, &CAppWnd::OnTabCtrl)
 END_MESSAGE_MAP()
 
 CAppWnd::CAppWnd() : CFrameWnd()
@@ -70,10 +70,6 @@ CAppWnd::CAppWnd() : CFrameWnd()
 	MoveWindow(Options.LayoutX, Options.LayoutY, r.Width(), r.Height());
 	LoadAccelTable(MAKEINTRESOURCE(IDR_ACCELERATOR));
 
-	//load sound resources
-	//FindResource(::AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_WAVE_BOOM), L"WAVE");
-
-
 	//init game values
 	GameState = GS_NO_GAME;
 	GameField.Initialize(GetBLockContext, EventsProcedure);
@@ -82,48 +78,62 @@ CAppWnd::CAppWnd() : CFrameWnd()
 	ClockTimer.SetParent(m_hWnd);
 	MoveKeyTimer.SetParent(m_hWnd);
 
-	//create controls
-	NextShapeView = new CNextShapeView(this, 
-		APPWND_PADDING,
-		APPWND_PADDING );
-	LinesLabel = new CTextView(this, 
-		APPWND_PADDING, 
-		NextShapeView->Bottom() + APPWND_PADDING,
-		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"LINES");
-	LinesView = new CTextView(this, 
-		APPWND_PADDING, 
-		LinesLabel->Bottom(),
-		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
-	SpeedLabel = new CTextView(this, 
-		APPWND_PADDING, 
-		LinesView->Bottom() + APPWND_PADDING,
-		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"SPEED");
-	SpeedView = new CTextView(this, 
-		APPWND_PADDING, 
-		SpeedLabel->Bottom(),
-		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
-	TimeLabel = new CTextView(this, 
-		APPWND_PADDING, 
-		SpeedView->Bottom() + APPWND_PADDING,
-		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"TIME");
-	TimeView = new CTextView(this, 
-		APPWND_PADDING, 
-		TimeLabel->Bottom(),
-		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
-	GameFieldView = new CGameFieldView(this,
-		APPWND_PADDING + NextShapeView->Width() + APPWND_PADDING,
-		APPWND_PADDING, &GameField);
+	//init tab control
+	CRect client_rect;
+	GetClientRect(&client_rect);
+	TabCtrl.Create(CMFCTabCtrl::STYLE_3D, client_rect, this, IDC_TAB_CTRL, CMFCTabCtrl::LOCATION_TOP);
+	TabCtrl.SetActiveTabBoldFont();
+	GameTab.Create(_T(""), WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, CRect(0, 0, 0, 0), &TabCtrl);
+	ScoreTab.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | LV_VIEW_DETAILS, CRect(0, 0, 0, 0), &TabCtrl, IDC_SCORE_LIST);
+	ScoreTab.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	TabCtrl.AddTab(&GameTab, _T("Game"));
+	TabCtrl.AddTab(&ScoreTab, _T("Results"));
+	
+	//init score list columns
+	ScoreTab.GetClientRect(client_rect);
+	const int column_width = client_rect.Width() / COLUMN_COUNT;
+	ScoreTab.InsertColumn(COLUMN_RANK, L"Rank", LVCFMT_LEFT, column_width);
+	ScoreTab.InsertColumn(COLUMN_SCORE, L"Score", LVCFMT_LEFT, column_width);
+	ScoreTab.InsertColumn(COLUMN_DATE, L"Date", LVCFMT_LEFT, column_width);
+
+	//recalculate window height
+	CRect rectTabAreaTop;
+	CRect rectTabAreaBottom;
+	TabCtrl.GetTabArea(rectTabAreaTop, rectTabAreaBottom);
+	const int tab_height = rectTabAreaTop.Height() + rectTabAreaBottom.Height();
+	CRect wnd_rect;
+	GetWindowRect(wnd_rect);
+	SetWindowPos(NULL, wnd_rect.left, wnd_rect.top, wnd_rect.Width(), wnd_rect.Height() + tab_height, SWP_NOMOVE | SWP_NOOWNERZORDER);
+	TabCtrl.GetWindowRect(wnd_rect);
+	TabCtrl.SetWindowPos(NULL, wnd_rect.left, wnd_rect.top, wnd_rect.Width(), wnd_rect.Height() + tab_height, SWP_NOMOVE | SWP_NOOWNERZORDER);
+
+	//load best scores
+	try
+	{
+		CScoresDB scores_db;
+		scores_db.Load(BestScores);
+	}
+	catch (CDBException& exc)
+	{
+		CString msg(L"Unable to load best scores:\n");
+		msg += CString(exc.what());
+		::AfxMessageBox(msg, MB_ICONWARNING | MB_OK);
+	}
+
+	//TEST: fill scores
+	//time_t rt;
+	//::time(&rt);
+	//for (int i = 0; i < CBestScores::MAX_RESULTS; ++i)
+	//{
+	//	const int score = ::rand() % 200;
+	//	rt = rt - static_cast<time_t>(::rand() & 3600);
+	//  BestScores.add(score, rt);
+	//}
+
+	UpdateScoresList();
 }
 CAppWnd::~CAppWnd()
 {
-	delete LinesView;
-	delete LinesLabel;
-	delete SpeedView;
-	delete SpeedLabel;
-	delete TimeLabel;
-	delete TimeView;
-	delete GameFieldView;
-	delete NextShapeView;
 }
 block_t CAppWnd::GetBLockContext()
 {
@@ -159,67 +169,37 @@ void CAppWnd::EventsProcedure(int event, int param)
 }
 void CAppWnd::OnNewShape()
 {
-	NextShapeView->SetShape(GameField.GetNextShape());
+	GameTab.NextShapeView->SetShape(GameField.GetNextShape());
 }
 void CAppWnd::OnShapeMove()
 {
-	GameFieldView->OnShapeMove();
+	GameTab.GameFieldView->OnShapeMove();
 }
 void CAppWnd::OnShapeLanded()
 {
-	GameFieldView->OnShapeLanded();	
+	GameTab.GameFieldView->OnShapeLanded();
 }
 void CAppWnd::OnLineDelete(int y_coord)
 {
 	//TEST:
-	//++LinesCount;
+	//++CurrentScore;
 	//GameFieldView->RePaint();
-	//LinesView->SetText(LinesCount);
+	//LinesView->SetText(CurrentScore);
 }
 void CAppWnd::OnLinesDelete(int lines_count)
 {
-	LinesCount += lines_count;
-	GameFieldView->OnLinesDelete();
-	LinesView->SetText(LinesCount);
+	CurrentScore += lines_count;
+	GameTab.GameFieldView->OnLinesDelete();
+	GameTab.LinesView->SetText(CurrentScore);
 }
 void CAppWnd::OnGameOver()
 {
 	ClockTimer.Kill();
 	GameState = GS_GAME_OVER;
-	GameFieldView->OnGameOver();
-	if(LinesCount > Statistics.GetWorstScore())	//add player to statistics
-	{
-		CString player;
-		CStatisticRecord record;
-		CPlayerNameDlg dlg(this);
-		dlg.DoModal();
-		record.PlayerName = dlg.PlayerName;
-		record.Lines = LinesCount;
-
-		//TODO:
-		record.Score = 0;
-		record.Bonus = 0;
-
-		record.Time = GameTime.Get();
-		record.Date = CTime::GetCurrentTime();
-
-		Statistics.AddRecord(record);
-		CStatisticsDlg statdlg(this);
-		statdlg.DoModal();
-	}
-	LinesCount = 0;
-}
-void CAppWnd::OnPaint()
-{
-	CPaintDC dc(this); // device context for painting
-	GameFieldView->OnPaint(&dc);
-	NextShapeView->OnPaint(&dc);
-	LinesView->OnPaint(&dc);
-	LinesLabel->OnPaint(&dc);
-	SpeedView->OnPaint(&dc);
-	SpeedLabel->OnPaint(&dc);
-	TimeLabel->OnPaint(&dc);
-	TimeView->OnPaint(&dc);
+	GameTab.GameFieldView->OnGameOver();
+	if (BestScores.add(CurrentScore))
+		UpdateScoresList();
+	CurrentScore = 0;
 }
 void CAppWnd::OnNewGame()
 {
@@ -233,13 +213,13 @@ void CAppWnd::OnNewGame()
 	TCTick.Start(ticks, MAX_TICK_INTERVAL);
 	GameTime.Start(ticks);
 	
-	LinesCount = 0;
+	CurrentScore = 0;
 	GameField.OnNewGame();
-	GameFieldView->OnNewGame();
+	GameTab.GameFieldView->OnNewGame();
 	GameState = GS_RUNNING;
-	LinesView->SetText(L"0");
-	SpeedView->SetText(L"+0%");
-	TimeView->SetTime(0);
+	GameTab.LinesView->SetText(L"0");
+	GameTab.SpeedView->SetText(L"+0%");
+	GameTab.TimeView->SetTime(0);
 }
 void CAppWnd::OnRotateLeft()
 {
@@ -255,6 +235,42 @@ void CAppWnd::OnDrop()
 {
 	if(GameState == GS_RUNNING)
 		GameField.OnDrop();
+}
+static int CALLBACK ScoreListViewSort(LPARAM param1, LPARAM param2, LPARAM ascending)
+{
+	return param1 > param2;
+}
+void CAppWnd::UpdateScoresList()
+{
+	ScoreTab.DeleteAllItems();
+
+	int rank = 1;
+	for (const auto& i : BestScores)
+	{
+		const int score = i.first;
+		const CDate& date = i.second;
+
+		LVITEM lvi;
+		::ZeroMemory(&lvi, sizeof(lvi));
+		lvi.mask = LVIF_TEXT | LVIF_PARAM;
+		lvi.lParam = static_cast<LPARAM>(rank);
+
+		CString str;
+		str.Format(L"%u", rank);
+		lvi.pszText = str.GetBuffer();
+		const int item_index = ScoreTab.InsertItem(&lvi);
+
+		str.Format(L"%u", score);
+		ScoreTab.SetItemText(item_index, COLUMN_SCORE, str.GetString());
+
+		CTime time(static_cast<__time64_t>(date));
+		CString time_str = time.Format(L"%H:%M %d.%m.%Y");
+		ScoreTab.SetItemText(item_index, COLUMN_DATE, time_str);
+
+		++rank;
+	}
+
+	ScoreTab.SortItems(ScoreListViewSort, NULL);
 }
 void CAppWnd::Pause(bool pause)
 {
@@ -277,7 +293,7 @@ void CAppWnd::Pause(bool pause)
 		}
 
 		//TODO:
-		GameFieldView->OnPause(pause);
+		GameTab.GameFieldView->OnPause(pause);
 	}
 }
 void CAppWnd::OnPause()
@@ -296,16 +312,19 @@ void CAppWnd::OnTimer(UINT_PTR nIDEvent)
 		if (GameState != GS_RUNNING)
 			break;
 
+		//TODO: keep focus on main window to process WM_KEY_DOWN/UP events
+		SetFocus();
+
 		const DWORD ticks = ::GetTickCount();
 		if (TCTime.Check(ticks))
 		{
 			GameTime.Update(ticks);
-			TimeView->SetTime(GameTime.Get());
+			GameTab.TimeView->SetTime(GameTime.Get());
 
 			const UINT speed = TCTick.GetSpeed();
 			CString text;
 			text.Format(L"+%u%%", speed);
-			SpeedView->SetText(CString());
+			GameTab.SpeedView->SetText(CString());
 		}
 		if (TCTick.Check(ticks))
 		{
@@ -341,9 +360,12 @@ bool CAppWnd::QueryEndGame()
 		if(GS_RUNNING == GameState)
 			OnPause();
 
-		if (AfxMessageBox(_T("Finish current game?"), MB_OKCANCEL | MB_ICONEXCLAMATION, NULL) == IDOK)
+		if (AfxMessageBox(_T("Stop current game?"), MB_OKCANCEL | MB_ICONEXCLAMATION, NULL) == IDOK)
+		{
+			if (BestScores.add(CurrentScore))
+				UpdateScoresList();
 			return true;
-
+		}
 		if(GS_PAUSED == GameState)
 			OnPause();
 
@@ -360,6 +382,19 @@ void CAppWnd::OnExit()
 	}
 	else
 		Exit();
+
+	//save best scores
+	try
+	{
+		CScoresDB scores_db;
+		scores_db.Save(BestScores);
+	}
+	catch (CDBException& exc)
+	{
+		CString msg(L"Unable to save best scores:\n");
+		msg += CString(exc.what());
+		::AfxMessageBox(msg, MB_ICONWARNING | MB_OK);
+	}
 }
 void CAppWnd::OnAbout()
 {
@@ -401,7 +436,32 @@ void CAppWnd::OnGameOptions()
 }
 void CAppWnd::OnHighscores()
 {
-	CStatisticsDlg dlg;
-	dlg.DoModal();
+	TabCtrl.SetActiveTab(TAB_SCORES);
+}
+void CAppWnd::OnClearScores()
+{
+	if (IDOK != ::AfxMessageBox(L"Delete best scores?", MB_ICONWARNING | MB_OKCANCEL))
+		return;
+
+	BestScores.clear();
+	try
+	{
+		CScoresDB scores_db;
+		scores_db.Clear();
+	}
+	catch (CDBException& exc)
+	{
+		CString msg(L"Unable to delete best scores:\n");
+		msg += CString(exc.what());
+		::AfxMessageBox(msg, MB_ICONWARNING | MB_OK);
+	}
+
+	UpdateScoresList();
+}
+LRESULT CAppWnd::OnTabCtrl(WPARAM wParam, LPARAM lParam)
+{
+	//pause/unpause game when tab switches
+	OnPause();
+	return FALSE;
 }
 

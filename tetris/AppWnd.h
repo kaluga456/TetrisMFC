@@ -20,7 +20,6 @@ public:
 	void OnGameOver();
 
 	//system and user event handlers
-	afx_msg void OnPaint();
 	afx_msg void OnNewGame();
 	afx_msg void OnRotateLeft();
 	afx_msg void OnRotateRight();
@@ -34,8 +33,29 @@ public:
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnGameOptions();
 	afx_msg void OnHighscores();
+	afx_msg void OnClearScores();
+	afx_msg LRESULT OnTabCtrl(WPARAM wParam, LPARAM lParam);
 
 private:
+	//tabs
+	enum : int
+	{
+		TAB_GAME,
+		TAB_SCORES,
+
+		TAB_COUNT
+	};
+
+	//score list columns
+	enum : int
+	{
+		COLUMN_RANK,
+		COLUMN_SCORE,
+		COLUMN_DATE,
+
+		COLUMN_COUNT
+	};
+
 	//timers
 	CMoveKeyTimer MoveKeyTimer;
 	CTimer ClockTimer{ CLOCK_TIMER_ID };
@@ -45,22 +65,17 @@ private:
 	CTickCounter TCTime;  //time view update
 	CGameTick TCTick;  //game tick event
 
-	//statistics
-	int LinesCount{ 0 };
+	//score
+	int CurrentScore{ 0 };
 
 	//logic
 	int GameState{GS_NO_GAME};
-	CGameField GameField;
 
-	//controls
-	CTextView* LinesLabel;
-	CTextView* LinesView;
-	CTextView* SpeedLabel;
-	CTextView* SpeedView;
-	CTextView* TimeLabel;
-	CTextView* TimeView;
-	CGameFieldView* GameFieldView;
-	CNextShapeView* NextShapeView;
+	CMFCTabCtrl TabCtrl;
+	CGameControl GameTab;
+	CListCtrl ScoreTab;
+
+	void UpdateScoresList();
 
 	void Pause(bool pause);
 	bool QueryEndGame();

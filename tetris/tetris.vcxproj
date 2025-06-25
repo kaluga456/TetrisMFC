@@ -120,8 +120,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)tetris.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>sqlite3.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -158,20 +157,18 @@
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>sqlite3.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AppWnd.cpp" />
+    <ClCompile Include="BestScores.cpp" />
     <ClCompile Include="controls.cpp" />
     <ClCompile Include="logic.cpp" />
     <ClCompile Include="options.cpp" />
     <ClCompile Include="OptionsDlg.cpp" />
-    <ClCompile Include="PlayerNameDlg.cpp" />
     <ClCompile Include="random.cpp" />
-    <ClCompile Include="statistics.cpp" />
-    <ClCompile Include="StatisticsDlg.cpp" />
+    <ClCompile Include="ScoresDB.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TetrisApp.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -179,15 +176,14 @@
   <ItemGroup>
     <ClInclude Include="about.h" />
     <ClInclude Include="AppWnd.h" />
+    <ClInclude Include="BestScores.h" />
     <ClInclude Include="controls.h" />
     <ClInclude Include="logic.h" />
     <ClInclude Include="options.h" />
     <ClInclude Include="OptionsDlg.h" />
-    <ClInclude Include="PlayerNameDlg.h" />
     <ClInclude Include="random.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="statistics.h" />
-    <ClInclude Include="StatisticsDlg.h" />
+    <ClInclude Include="ScoresDB.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TetrisApp.h" />
     <ClInclude Include="Timer.h" />
@@ -198,6 +194,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="tetris.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="TODO.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

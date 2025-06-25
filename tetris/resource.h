@@ -3,16 +3,14 @@
 // Used by tetris.rc
 //
 #define IDR_ACCELERATOR                 101
+#define IDC_TAB_CTRL                    104
+#define IDC_SCORE_LIST                  105
 #define IDR_MAIN_MENU                   108
 #define IDD_OPTIONS                     109
-#define IDD_STATISTICS                  111
-#define IDD_PLAYER_NAME                 112
 #define ID_MAIN_ICON                    113
 #define IDB_BACKGROUND                  115
 #define IDC_SOUND_CHECK                 1001
 #define IDC_KEYSPEED_SLIDER             1004
-#define IDC_HIGH_SCORES_LIST            1006
-#define IDC_PLAYER_NAME                 1007
 #define ID_NEW_GAME                     40003
 #define ID_MOVE_LEFT                    40005
 #define ID_MOVE_RIGHT                   40006
@@ -26,14 +24,16 @@
 #define ID_GAME_OPTIONS                 40025
 #define ID_HELP_HELP                    40027
 #define ID_HIGHSCORES                   40028
+#define ID_GAME_CLEARSCORES             40036
+#define ID_GAME_DELETESCORES            40037
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        117
-#define _APS_NEXT_COMMAND_VALUE         40036
+#define _APS_NEXT_COMMAND_VALUE         40038
 #define _APS_NEXT_CONTROL_VALUE         1008
-#define _APS_NEXT_SYMED_VALUE           104
+#define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif

@@ -133,17 +133,17 @@ CGameFieldView::CGameFieldView(CWnd* parent, int x, int y, const CGameField* gam
 		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
 		_T("Comic Sans MS"));      // lpszFacename
 
+	//TODO:
 	//game field bitmap background
-	if (Backgorund.LoadBitmap(IDB_BACKGROUND))
-	{
-		Backgorund.GetBitmap(&BgInfo);
+	//if (Backgorund.LoadBitmap(IDB_BACKGROUND))
+	//{
+	//	Backgorund.GetBitmap(&BgInfo);
 
-		CDC* dc = ParentWnd->GetDC();
-		BgMemory.CreateCompatibleDC(dc);
-		ParentWnd->ReleaseDC(dc);
-
-		BgMemory.SelectObject(&Backgorund);
-	}
+	//	CDC* dc = ParentWnd->GetDC();
+	//	BgMemory.CreateCompatibleDC(dc);
+	//	ParentWnd->ReleaseDC(dc);
+	//	BgMemory.SelectObject(&Backgorund);
+	//}
 
 }
 void CGameFieldView::DrawBackground(CDC* dc)
@@ -248,4 +248,72 @@ void CGameFieldView::OnPause(bool pause)
 {
 	State = pause ? GS_PAUSED  : GS_RUNNING;
 	RePaint();
+}
+
+CGameControl::CGameControl() : CStatic()
+{
+	//create controls
+	NextShapeView = new CNextShapeView(this,
+		APPWND_PADDING,
+		APPWND_PADDING);
+	LinesLabel = new CTextView(this,
+		APPWND_PADDING,
+		NextShapeView->Bottom() + APPWND_PADDING,
+		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"SCORE");
+	LinesView = new CTextView(this,
+		APPWND_PADDING,
+		LinesLabel->Bottom(),
+		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
+	SpeedLabel = new CTextView(this,
+		APPWND_PADDING,
+		LinesView->Bottom() + APPWND_PADDING,
+		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"SPEED");
+	SpeedView = new CTextView(this,
+		APPWND_PADDING,
+		SpeedLabel->Bottom(),
+		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
+	TimeLabel = new CTextView(this,
+		APPWND_PADDING,
+		SpeedView->Bottom() + APPWND_PADDING,
+		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"TIME");
+	TimeView = new CTextView(this,
+		APPWND_PADDING,
+		TimeLabel->Bottom(),
+		TEXT_VIEW_WIDTH, TEXT_VIEW_HEIGHT, L"");
+	GameFieldView = new CGameFieldView(this,
+		APPWND_PADDING + NextShapeView->Width() + APPWND_PADDING,
+		APPWND_PADDING, &GameField);
+}
+CGameControl::~CGameControl()
+{
+	delete LinesView;
+	delete LinesLabel;
+	delete SpeedView;
+	delete SpeedLabel;
+	delete TimeLabel;
+	delete TimeView;
+	delete GameFieldView;
+	delete NextShapeView;
+}
+void CGameControl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	CDC dc;
+	dc.Attach(lpDrawItemStruct->hDC);
+
+	//draw background
+	CRect client_rect;
+	GetClientRect(&client_rect);
+	dc.FillSolidRect(&client_rect, ::GetSysColor(COLOR_WINDOW));
+
+	//draw controls
+	GameFieldView->OnPaint(&dc);
+	NextShapeView->OnPaint(&dc);
+	LinesView->OnPaint(&dc);
+	LinesLabel->OnPaint(&dc);
+	SpeedView->OnPaint(&dc);
+	SpeedLabel->OnPaint(&dc);
+	TimeLabel->OnPaint(&dc);
+	TimeView->OnPaint(&dc);
+
+	dc.Detach();
 }

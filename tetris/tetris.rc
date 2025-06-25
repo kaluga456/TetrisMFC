@@ -49,6 +49,7 @@ BEGIN
         MENUITEM "&New game\tEnter",            ID_NEW_GAME
         MENUITEM "&Pause/Resume game\tEscape",  ID_PAUSE
         MENUITEM "&Options...\tF4",             ID_GAME_OPTIONS
+        MENUITEM "Delete Scores...",            ID_GAME_DELETESCORES
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               ID_EXIT
     END
@@ -81,24 +82,6 @@ BEGIN
     LTEXT           "Slow",IDC_STATIC,99,50,16,8
 END
 
-IDD_STATISTICS DIALOGEX 0, 0, 289, 146
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,119,125,50,14
-    CONTROL         "",IDC_HIGH_SCORES_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,275,111
-END
-
-IDD_PLAYER_NAME DIALOGEX 0, 0, 114, 58
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,31,31,50,14
-    EDITTEXT        IDC_PLAYER_NAME,7,7,100,14,ES_AUTOHSCROLL
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -114,22 +97,6 @@ BEGIN
         RIGHTMARGIN, 115
         TOPMARGIN, 7
         BOTTOMMARGIN, 80
-    END
-
-    IDD_STATISTICS, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 282
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 139
-    END
-
-    IDD_PLAYER_NAME, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 107
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 51
     END
 END
 #endif    // APSTUDIO_INVOKED
