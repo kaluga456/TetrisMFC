@@ -1,1 +1,4 @@
-![mainwnd1](https://github.com/user-attachments/assets/5dd8a426-c973-4abd-9c4e-22b6b68e6553)
+sqlite3.dll required to run this program (https://sqlite.org/download.html)<br>
+![screen1+2](https://github.com/user-attachments/assets/97cecc0b-9673-4c01-90b8-b10bcd81b248)
+
+
