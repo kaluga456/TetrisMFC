@@ -1,4 +1,5 @@
 sqlite3.dll required to run this program (https://sqlite.org/download.html)<br>
-![screen1+2](https://github.com/user-attachments/assets/97cecc0b-9673-4c01-90b8-b10bcd81b248)
+![screen3-1](https://github.com/user-attachments/assets/2932504e-47fb-4c4a-b595-5329a50eb133)
+
 
 
