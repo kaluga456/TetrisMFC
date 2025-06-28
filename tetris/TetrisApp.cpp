@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #pragma hdrstop
 #include "resource.h"
-#include "logic.h"
-#include "controls.h"
-#include "BestScores.h"
+#include "TetrisEngine.h"
+#include "Graphics.h"
+#include "Rating.h"
 #include "options.h"
 #include "Timer.h"
 #include "AppWnd.h"

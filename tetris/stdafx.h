@@ -4,7 +4,7 @@
 #include <random>
 #include <algorithm>
 #include <string>
-#include <map>
+#include <vector>
 
 //SQLite
 #include "sqlite3.h"

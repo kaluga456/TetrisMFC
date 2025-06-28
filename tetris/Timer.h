@@ -1,36 +1,51 @@
 #pragma once
+//////////////////////////////////////////////////////////////////////////////
+//TODO: shape movement types
+enum : int
+{
+	MT_UNDEFINED = 0,
 
+	MT_MOVE_DOWN,
+	MT_MOVE_RIGHT,
+	MT_MOVE_LEFT,
+
+	MT_ROTATE_LEFT,
+	MT_ROTATE_RIGHT
+};
+//////////////////////////////////////////////////////////////////////////////
 //timer IDs
 enum : UINT_PTR
 {
-	MOVE_TIMER_ID = 94567,
 	CLOCK_TIMER_ID = 73966,
+	LEFT_KEY_TIMER_ID = 94568,
+	RIGHT_KEY_TIMER_ID = 94569,
+	DOWN_KEY_TIMER_ID = 94570,
 };
-
+//////////////////////////////////////////////////////////////////////////////
 //intervals, ms
 constexpr UINT CLOCK_INTERVAL = 50;
 constexpr UINT UPDATE_INTERVAL = 1000;
-
+//////////////////////////////////////////////////////////////////////////////
 //tick counter for clock timer
 class CTickCounter
 {
 public:
 	explicit CTickCounter(UINT interval = 0) : Interval(interval), PausedTicks{0} {}
 
-	void Start(DWORD ticks, UINT interval) { Ticks = ticks; Interval = interval; PausedTicks = 0; }
+	void Start(ULONGLONG ticks, UINT interval) { Ticks = ticks; Interval = interval; PausedTicks = 0; }
 	void Stop() { Interval = 0; }
 
-	bool Check(DWORD ticks);
+	bool Check(ULONGLONG ticks);
 
-	void Pause(DWORD ticks);
-	void Resume(DWORD ticks);
+	void Pause(ULONGLONG ticks);
+	void Resume(ULONGLONG ticks);
 
 protected:
 	UINT Interval{ 0 };
-	DWORD Ticks{ 0 };
-	DWORD PausedTicks{ 0 };
+	ULONGLONG Ticks{ 0 };
+	ULONGLONG PausedTicks{ 0 };
 };
-
+//////////////////////////////////////////////////////////////////////////////
 //game tick counter
 constexpr UINT MIN_TICK_INTERVAL = CLOCK_INTERVAL;
 constexpr UINT MAX_TICK_INTERVAL = 1000;
@@ -42,35 +57,35 @@ class CGameTick : public CTickCounter
 public:
 	CGameTick() : CTickCounter(MAX_TICK_INTERVAL) {}
 
-	bool Check(DWORD ticks);
-	void Pause(DWORD ticks);
-	void Resume(DWORD ticks);
+	bool Check(ULONGLONG ticks);
+	void Pause(ULONGLONG ticks);
+	void Resume(ULONGLONG ticks);
 
-	UINT GetSpeed() const; //in %
+	int GetSpeed() const; //in %
 
 private:
-	DWORD BoostTicks{ 0 };
-	DWORD PausedBoostTicks{ 0 };
+	ULONGLONG BoostTicks{ 0 };
+	ULONGLONG PausedBoostTicks{ 0 };
 };
-
+//////////////////////////////////////////////////////////////////////////////
 class CGameTime
 {
 public:
 	CGameTime() : Ticks{ 0 }, PausedTicks{ 0 }, Time{ 0 } {}
 
-	void Start(DWORD ticks) { Ticks = ticks;  PausedTicks = 0; Time = 0; }
-	void Update(DWORD ticks);
-	void Pause(DWORD ticks) { PausedTicks = ticks - Ticks; }
-	void Resume(DWORD ticks) { Ticks = ticks - PausedTicks; }
+	void Start(ULONGLONG ticks) { Ticks = ticks;  PausedTicks = 0; Time = 0; }
+	void Update(ULONGLONG ticks);
+	void Pause(ULONGLONG ticks) { PausedTicks = ticks - Ticks; }
+	void Resume(ULONGLONG ticks) { Ticks = ticks - PausedTicks; }
 
 	UINT Get() const { return Time; }
 
 private:
-	DWORD Ticks;
-	DWORD PausedTicks{ 0 };
+	ULONGLONG Ticks;
+	ULONGLONG PausedTicks{ 0 };
 	UINT Time; //ms
 };
-
+//////////////////////////////////////////////////////////////////////////////
 //window timer
 class CTimer
 {
@@ -87,22 +102,24 @@ protected:
 	UINT_PTR Timer{ 0 };
 	UINT_PTR Id{ 0 };
 };
-
+//////////////////////////////////////////////////////////////////////////////
 //move key repetition timer
 class CMoveKeyTimer : public CTimer
 {
 public:
-	CMoveKeyTimer() : CTimer(MOVE_TIMER_ID) {}
-	~CMoveKeyTimer() { ::KillTimer(Parent, MOVE_TIMER_ID); }
+	explicit CMoveKeyTimer(UINT_PTR id) : CTimer(id) {}
+	~CMoveKeyTimer() { ::KillTimer(Parent, Id); }
 
 	//access
 	UINT GetMoveType() const;
 	bool IsMoveKey(UINT key) const;
 
 	//start|stop
+	bool Start();
 	bool OnKeyDown(UINT key); //return true if timer started
 	void OnKeyUp(UINT key);
 
 protected:
 	UINT Key{}; //pressed move key or 0
 };
+//////////////////////////////////////////////////////////////////////////////

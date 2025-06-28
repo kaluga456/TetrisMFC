@@ -1,34 +1,36 @@
 #include "stdafx.h"
 #pragma hdrstop
-#include "logic.h"
 #include "options.h"
 #include "Timer.h"
 
 extern COptions Options;
-
-bool CTickCounter::Check(DWORD ticks)
+//////////////////////////////////////////////////////////////////////////////
+//CTickCounter
+bool CTickCounter::Check(ULONGLONG ticks)
 {
-	if (0 == Interval || Interval > static_cast<UINT>(ticks - Ticks))
+	if (0 == Interval || Interval > static_cast<ULONGLONG>(ticks - Ticks))
 		return false;
 	Ticks = ticks;
 	return true;
 }
-void CTickCounter::Pause(DWORD ticks)
+void CTickCounter::Pause(ULONGLONG ticks)
 { 
 	if (0 == Interval)
 		return;
 	PausedTicks = ticks - Ticks; 
 }
-void CTickCounter::Resume(DWORD ticks)
+void CTickCounter::Resume(ULONGLONG ticks)
 { 
 	if (0 == Interval)
 		return;
 	Ticks = ticks - PausedTicks; 
 }
-bool CGameTick::Check(DWORD ticks)
+//////////////////////////////////////////////////////////////////////////////
+//CGameTick
+bool CGameTick::Check(ULONGLONG ticks)
 {
 	//TODO: increase speed
-	const UINT d = static_cast<UINT>(ticks - BoostTicks);
+	const ULONGLONG d = static_cast<ULONGLONG>(ticks - BoostTicks);
 	if (d >= SPEED_BOOST_INTERVAL)
 	{
 		if(Interval > MIN_TICK_INTERVAL)
@@ -38,31 +40,33 @@ bool CGameTick::Check(DWORD ticks)
 
 	return CTickCounter::Check(ticks);
 }
-void CGameTick::Pause(DWORD ticks) 
+void CGameTick::Pause(ULONGLONG ticks)
 {
 	PausedBoostTicks = ticks - BoostTicks;
 	CTickCounter::Pause(ticks); 
 }
-void CGameTick::Resume(DWORD ticks) 
+void CGameTick::Resume(ULONGLONG ticks)
 { 
 	BoostTicks = ticks - PausedBoostTicks;
 	CTickCounter::Resume(ticks);
 }
-UINT CGameTick::GetSpeed() const
+int CGameTick::GetSpeed() const
 {
-	const UINT result = 100 - static_cast<UINT>(100. * static_cast<float>(Interval) / MAX_TICK_INTERVAL);
+	const int result = 100 - static_cast<int>(100. * static_cast<float>(Interval) / MAX_TICK_INTERVAL);
 	if (result < 0) return 0;
 	if (result > 100) return 100;
 	return result;
 }
-
-void CGameTime::Update(DWORD ticks)
+//////////////////////////////////////////////////////////////////////////////
+//CGameTime
+void CGameTime::Update(ULONGLONG ticks)
 {
-	const UINT d = static_cast<UINT>(ticks - Ticks);
-	Time += d;
+	const ULONGLONG d = static_cast<ULONGLONG>(ticks - Ticks);
+	Time += static_cast<UINT>(d);
 	Ticks = ticks;
 }
-
+//////////////////////////////////////////////////////////////////////////////
+//CTimer
 void CTimer::SetParent(HWND parent)
 {
 	Kill();
@@ -80,12 +84,13 @@ void CTimer::Kill()
 	::KillTimer(Parent, Id);
 	Timer = 0;
 }
-
+//////////////////////////////////////////////////////////////////////////////
+//CMoveKeyTimer
 bool CMoveKeyTimer::IsMoveKey(UINT key) const
 {
 	return	VK_LEFT == key || 'A' == key ||
-		VK_RIGHT == key || 'D' == key ||
-		VK_DOWN == key || 'S' == key;
+			VK_RIGHT == key || 'D' == key ||
+			VK_DOWN == key || 'S' == key;
 }
 UINT CMoveKeyTimer::GetMoveType() const
 {
@@ -93,6 +98,15 @@ UINT CMoveKeyTimer::GetMoveType() const
 	if (VK_RIGHT == Key || 'D' == Key) return MT_MOVE_RIGHT;
 	if (VK_DOWN == Key || 'S' == Key) return MT_MOVE_DOWN;
 	return MT_UNDEFINED;
+}
+bool CMoveKeyTimer::Start()
+{
+	//already started
+	if (Timer)
+		return false;
+
+	CTimer::Start(Options.KeyboardSpeed);
+	return true;
 }
 bool CMoveKeyTimer::OnKeyDown(UINT key)
 {
@@ -102,7 +116,7 @@ bool CMoveKeyTimer::OnKeyDown(UINT key)
 
 	ASSERT(0 == Timer);
 	Key = key;
-	Start(Options.KeyboardSpeed);
+	CTimer::Start(Options.KeyboardSpeed);
 	return true;
 }
 void CMoveKeyTimer::OnKeyUp(UINT key)
@@ -111,3 +125,4 @@ void CMoveKeyTimer::OnKeyUp(UINT key)
 	Kill();
 	Key = 0;
 }
+//////////////////////////////////////////////////////////////////////////////

@@ -48,15 +48,16 @@ BEGIN
     BEGIN
         MENUITEM "&New game\tEnter",            ID_NEW_GAME
         MENUITEM "&Pause/Resume game\tEscape",  ID_PAUSE
+        MENUITEM SEPARATOR
         MENUITEM "&Options...\tF4",             ID_GAME_OPTIONS
-        MENUITEM "Delete Scores...",            ID_GAME_DELETESCORES
+        MENUITEM "Clear Rating...",             ID_GAME_DELETESCORES
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               ID_EXIT
     END
     POPUP "&Help"
     BEGIN
         MENUITEM "&Help...\tF1",                ID_HELP_HELP
-        MENUITEM "High &scores...\tF3",         ID_HIGHSCORES
+        MENUITEM "&Rating...\tF3",              ID_HIGHSCORES
         MENUITEM SEPARATOR
         MENUITEM "&About..",                    ID_ABOUT
     END

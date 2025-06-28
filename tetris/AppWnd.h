@@ -1,40 +1,34 @@
 #pragma once
-
+//////////////////////////////////////////////////////////////////////////////
 class CAppWnd : public CFrameWnd
 {
 DECLARE_MESSAGE_MAP ()
 public:
 	CAppWnd();
-	~CAppWnd();
+	~CAppWnd() {}
 
-	//callbacks
-	static void EventsProcedure(int event, int param);
-	static block_t GetBLockContext();
-
-	//GameField event handlers
-	void OnNewShape();
-	void OnShapeMove();
-	void OnShapeLanded();
-	void OnLineDelete(int y_coord);
-	void OnLinesDelete(int lines_count);
+	//DEPRECATE: GameField event handlers
 	void OnGameOver();
 
 	//system and user event handlers
-	afx_msg void OnNewGame();
+	afx_msg void OnStartGame();
 	afx_msg void OnRotateLeft();
 	afx_msg void OnRotateRight();
 	afx_msg void OnDrop();
 	afx_msg void OnPause();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnExit();
 	afx_msg void OnAbout();
 	afx_msg void OnClose();
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnGameOptions();
-	afx_msg void OnHighscores();
-	afx_msg void OnClearScores();
-	afx_msg LRESULT OnTabCtrl(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnRating();
+	afx_msg void OnClearRating();
+	afx_msg void OnTabChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnTabChanging(NMHDR* pNMHDR, LRESULT* pResult);
+
+	//timer events
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 private:
 	//tabs
@@ -57,27 +51,45 @@ private:
 	};
 
 	//timers
-	CMoveKeyTimer MoveKeyTimer;
 	CTimer ClockTimer{ CLOCK_TIMER_ID };
+	CMoveKeyTimer LeftKeyTimer;
+	CMoveKeyTimer RightKeyTimer;
+	CMoveKeyTimer DownKeyTimer;
 
 	//counters
 	CGameTime GameTime; //time counter
 	CTickCounter TCTime;  //time view update
 	CGameTick TCTick;  //game tick event
 
-	//score
+	//game
+	enum : int
+	{
+		//game state
+		GS_NO_GAME,
+		GS_GAME_OVER,
+		GS_RUNNING,
+		GS_PAUSED
+	};
+	int GameState{GS_NO_GAME};
 	int CurrentScore{ 0 };
 
-	//logic
-	int GameState{GS_NO_GAME};
-
-	CMFCTabCtrl TabCtrl;
-	CGameControl GameTab;
+	//tabs
+	CTabCtrl TabCtrl;
 	CListCtrl ScoreTab;
+	CGameTab GameTab;
 
 	void UpdateScoresList();
 
-	void Pause(bool pause);
+	void StartGame();
+	void StopGame(int game_state);
+	void Pause(bool pause = true);
+
+	void ProcessResult(int engine_result);
 	bool QueryEndGame();
 	void Exit();
+
+	//dialogs
+	bool ShowQeuryMessage(LPCTSTR message);
+	void ShowWarningMessage(LPCTSTR message);
 };
+//////////////////////////////////////////////////////////////////////////////

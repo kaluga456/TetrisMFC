@@ -162,30 +162,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AppWnd.cpp" />
-    <ClCompile Include="BestScores.cpp" />
-    <ClCompile Include="controls.cpp" />
-    <ClCompile Include="logic.cpp" />
+    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="options.cpp" />
     <ClCompile Include="OptionsDlg.cpp" />
     <ClCompile Include="random.cpp" />
+    <ClCompile Include="Rating.cpp" />
     <ClCompile Include="ScoresDB.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TetrisApp.cpp" />
+    <ClCompile Include="TetrisEngine.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="about.h" />
     <ClInclude Include="AppWnd.h" />
-    <ClInclude Include="BestScores.h" />
-    <ClInclude Include="controls.h" />
-    <ClInclude Include="logic.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="options.h" />
     <ClInclude Include="OptionsDlg.h" />
     <ClInclude Include="random.h" />
+    <ClInclude Include="Rating.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScoresDB.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TetrisApp.h" />
+    <ClInclude Include="TetrisEngine.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>

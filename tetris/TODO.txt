@@ -1,0 +1,14 @@
+TODO:
++ scores db
++ score date as time_t
++ tab change event
++ pause on tab change
++ use TetrisEngine module
+- next shape view
++ movement keys timers
+- multiline text view
++ speed boost
+- bonus score points
+
+BUG:
++ movement keys focus
