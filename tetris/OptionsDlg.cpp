@@ -25,7 +25,6 @@ BOOL COptionsDlg::OnInitDialog()
 void COptionsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Check(pDX, IDC_SOUND_CHECK, Options.Sound);
 	DDX_Slider(pDX, IDC_KEYSPEED_SLIDER, Options.KeyboardSpeed);
 }
 

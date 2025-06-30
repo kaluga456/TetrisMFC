@@ -21,8 +21,8 @@ void COptions::Read(LPCTSTR ini_file_name)
 	lstrcat(IniFileName, ini_file_name);
 	LayoutX = GetInt(_T("Layuot"), _T("LayoutX"), 100);
 	LayoutY = GetInt(_T("Layuot"), _T("LayoutY"), 100);
-	Sound = GetInt(_T("Layuot"), _T("Sound"), 1);
-
+	ShowGrid = GetInt(_T("Layuot"), _T("ShowGrid"), 1);
+	
 	KeyboardSpeed = GetInt(_T("Game"), _T("KeyboardSpeed"), 75);
 	if(KeyboardSpeed > KEYBOARD_MIN_SPEED)
 		KeyboardSpeed = KEYBOARD_MIN_SPEED;
@@ -33,6 +33,6 @@ void COptions::Write()
 {
 	WriteInt(_T("Layuot"), _T("LayoutX"), LayoutX);
 	WriteInt(_T("Layuot"), _T("LayoutY"), LayoutY);
-	WriteInt(_T("Layuot"), _T("Sound"), Sound);
+	WriteInt(_T("Layuot"), _T("ShowGrid"), ShowGrid);
 	WriteInt(_T("Game"), _T("KeyboardSpeed"), KeyboardSpeed);
 }

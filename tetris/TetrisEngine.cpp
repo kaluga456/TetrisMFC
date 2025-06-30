@@ -324,8 +324,7 @@ int engine::new_game()
 }
 int engine::new_shape()
 {
-    //TODO:
-    //new shape pos
+    //TODO: new shape pos
     ShapePos.X = GAME_FIELD_WIDTH / 2 - 1;
     ShapePos.Y = 0;
 

@@ -2,9 +2,11 @@
 #pragma hdrstop
 #include "resource.h"
 #include "TetrisEngine.h"
+#include "options.h"
 #include "Graphics.h"
 
 extern tetris::engine TetrisGame;
+extern COptions Options;
 //////////////////////////////////////////////////////////////////////////////
 //CGraphicView
 BOOL CGraphicView::Create(const RECT& rect, CWnd* pParentWnd, COLORREF bg_color, UINT nID /*= 0xffff*/)
@@ -38,7 +40,7 @@ void CGraphicView::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	Draw(dc, lpDrawItemStruct->rcItem);
 	dc.Detach();
 }
-void CGraphicView::RePaint()
+void CGraphicView::Repaint()
 {
 	Invalidate();
 	UpdateWindow();
@@ -67,12 +69,12 @@ void CTextView::Init(int font_size, LPCTSTR font_name, COLORREF font_color)
 void CTextView::SetText(LPCTSTR text /*= L""*/)
 {
 	Text = text ? text : L"";
-	RePaint();
+	Repaint();
 }
 void CTextView::SetText(LPCTSTR format, int value)
 {
 	Text.Format(format, value);
-	RePaint();
+	Repaint();
 }
 void CTextView::Draw(CDC& dc, const RECT& rect)
 {
@@ -83,6 +85,20 @@ void CTextView::Draw(CDC& dc, const RECT& rect)
 	RECT r(rect);
 	r.left += APPWND_PADDING;
 	dc.DrawText(Text, &r, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+	dc.SelectObject(old_font);
+}
+//////////////////////////////////////////////////////////////////////////////
+//CMultiTextView
+void CMultiTextView::Draw(CDC& dc, const RECT& rect)
+{
+	dc.FillSolidRect(&rect, BgColor);
+	dc.SetBkColor(BgColor);
+	CFont* old_font = dc.SelectObject(&Font);
+	dc.SetTextColor(FontColor);
+	RECT r(rect);
+	r.left += APPWND_PADDING;
+	r.top += APPWND_PADDING;
+	dc.DrawText(Text, &r, DT_LEFT | DT_NOPREFIX | DT_EXPANDTABS);
 	dc.SelectObject(old_font);
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -114,7 +130,7 @@ void CShapeView::SetShape(const tetris::shape_t* shape /*= nullptr*/)
 	if (nullptr == shape)
 	{
 		Matrix = nullptr;
-		RePaint();
+		Repaint();
 		return;
 	}
 
@@ -122,7 +138,7 @@ void CShapeView::SetShape(const tetris::shape_t* shape /*= nullptr*/)
 	Matrix = shape->get_matrix();
 	Color = shape->get_block_type();
 
-	RePaint();
+	Repaint();
 }
 void CShapeView::Draw(CDC& dc, const RECT& rect)
 {
@@ -178,35 +194,41 @@ void CShapeView::Draw(CDC& dc, const RECT& rect)
 //CGameView
 void CGameView::Init()
 {
-	Font.CreateFont(64,           // nHeight
-		0,                         // nWidth
-		0,                         // nEscapement
-		0,                         // nOrientation
-		FW_BOLD,				   // nWeight
-		FALSE,                     // bItalic
-		FALSE,                     // bUnderline
-		0,                         // cStrikeOut
-		ANSI_CHARSET,              // nCharSet
-		OUT_DEFAULT_PRECIS,        // nOutPrecision
-		CLIP_DEFAULT_PRECIS,       // nClipPrecision
-		DEFAULT_QUALITY,           // nQuality
-		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-		_T("Tahoma"));      // lpszFacename
-
-	for (int x = 0; x < tetris::GAME_FIELD_WIDTH; ++x)
-		for (int y = 0; y < tetris::GAME_FIELD_HEIGHT; ++y)
-			Blocks[x][y] = tetris::BLOCK_NONE;
+	Font.CreateFont(FIELD_TEXT_SIZE,	// nHeight
+		0,								// nWidth
+		0,								// nEscapement
+		0,								// nOrientation
+		FW_BOLD,						// nWeight
+		FALSE,							// bItalic
+		FALSE,							// bUnderline
+		0,								// cStrikeOut
+		ANSI_CHARSET,					// nCharSet
+		OUT_DEFAULT_PRECIS,				// nOutPrecision
+		CLIP_DEFAULT_PRECIS,			// nClipPrecision
+		DEFAULT_QUALITY,				// nQuality
+		DEFAULT_PITCH | FF_SWISS,		// nPitchAndFamily
+		FIELD_TEXT_FONT);				// lpszFacename
+	IsGrid = Options.ShowGrid;
 }
 void CGameView::SetMainText(LPCTSTR text /*= nullptr*/)
 {
 	Text = text ? text : L"";
-	RePaint();
+	Repaint();
+}
+void CGameView::ShowGrid()
+{
+	ShowGrid(!IsGrid);
+}
+void CGameView::ShowGrid(bool enable)
+{
+	if (IsGrid == enable)
+		return;
+	IsGrid = enable;
+	Repaint();
 }
 void CGameView::DrawBlock(CDC& dc, int x, int y, tetris::block_t color)
 {
-	//TODO:
 	CRect r;
-	//RectToParent(r);
 	if (tetris::BLOCK_NONE == color)
 	{
 		r.SetRect(x * BLOCK_VIEW_SIZE, y * BLOCK_VIEW_SIZE,
@@ -227,18 +249,37 @@ void CGameView::Draw(CDC& dc, const RECT& rect)
 	//draw background
 	dc.FillSolidRect(&rect, BgColor);
 
-	//draw game field
+	//TEST: draw frame
+	//CRect client_rect;
+	//GetClientRect(&client_rect);
+	//dc.DrawEdge(client_rect, EDGE_SUNKEN, BF_RECT);
+
+	//draw grid
+	if (true == IsGrid)
+	{
+		CPen pen(PS_SOLID, 1, COLOR_GRID);
+		CPen* old_pen = dc.SelectObject(&pen);
+		for (int x = 1; x < tetris::GAME_FIELD_WIDTH ; ++x)
+		{
+			dc.MoveTo(BLOCK_VIEW_SIZE * x, 0);
+			dc.LineTo(BLOCK_VIEW_SIZE * x, GAME_FIELD_VIEW_HEIGHT);
+		}
+		for (int y = 1; y < tetris::GAME_FIELD_HEIGHT; ++y)
+		{
+			dc.MoveTo(0, BLOCK_VIEW_SIZE * y);
+			dc.LineTo(GAME_FIELD_VIEW_WIDTH, BLOCK_VIEW_SIZE * y);
+		}
+		dc.SelectObject(old_pen);
+	}
+
+	//draw game blocks
 	for (int x = 0; x < tetris::GAME_FIELD_WIDTH; ++x)
 	{
 		for (int y = 0; y < tetris::GAME_FIELD_HEIGHT; ++y)
 		{
-			const tetris::block_t block = Blocks[x][y];
 			const tetris::block_t new_block = TetrisGame.get_block(x, y);
-
 			if (tetris::BLOCK_NONE == new_block)
 				continue;
-
-			Blocks[x][y] = new_block;
 			DrawBlock(dc, x, y, new_block);
 		}
 	}
@@ -246,12 +287,16 @@ void CGameView::Draw(CDC& dc, const RECT& rect)
 	//draw main text
 	if (false == Text.IsEmpty())
 	{
-		//TODO: transparent background
-		dc.SetBkColor(RGB(200, 150, 50));
+		const int SHADOW_OFFSET = 4;
+		dc.SetBkMode(TRANSPARENT);
 		CFont* oldfont = dc.SelectObject(&Font);
-		dc.SetTextColor(0x000000);
-		RECT r(rect);
-		dc.DrawText(Text.GetString(), &r, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		CRect r(rect);
+		r.OffsetRect(SHADOW_OFFSET, SHADOW_OFFSET);
+		dc.SetTextColor(COLOR_BLACK);
+		dc.DrawText(Text.GetString(), r, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		r.OffsetRect(-SHADOW_OFFSET, -SHADOW_OFFSET);
+		dc.SetTextColor(SCORE_TEXT_COLOR);
+		dc.DrawText(Text.GetString(), r, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 		dc.SelectObject(oldfont);
 	}
 }
@@ -267,17 +312,17 @@ int CGameTab::GetHeight()
 }
 void CGameTab::SetScore(int score /*= -1*/)
 {
-	ScoreView.SetText(score < 0 ? L"Score" : L"Score       %4d", score);
+	ScoreView.SetText(score < 0 ? L"Score          -" : L"Score       %4d", score);
 }
 void CGameTab::SetSpeed(int speed /*= -1*/)
 {
-	SpeedView.SetText(speed < 0 ? L"Speed" : L"Speed      %4d%%", speed);
+	SpeedView.SetText(speed < 0 ? L"Speed          -" : L"Speed      %4d%%", speed);
 }
 void CGameTab::SetTime(int value /*= -1*/)
 {
 	if (value < 0)
 	{
-		TimeView.SetText(L"Time    --:--:--");
+		TimeView.SetText(L"Time       --:--");
 		return;
 	}
 
@@ -286,7 +331,10 @@ void CGameTab::SetTime(int value /*= -1*/)
 	int hours = value / 3600;
 	int mins = (value / 60) % 60;
 	int secs = value % 60;
-	str.Format(_T("Time    %02u:%02u:%02u"), hours, mins, secs);
+	if(hours)
+		str.Format(_T("Time    %02u:%02u:%02u"), hours, mins, secs);
+	else
+		str.Format(_T("Time       %02u:%02u"), mins, secs);
 	TimeView.SetText(str);
 }
 BOOL CGameTab::Init(const CRect& rect, CWnd* parent)
@@ -302,21 +350,48 @@ BOOL CGameTab::Init(const CRect& rect, CWnd* parent)
 	ShapeView.Create(rect, left_offset, APPWND_PADDING, right_side_width, SHAPE_VIEW_HEIGHT, parent, COLOR_GAME_BKGROUND);
 	top_offset += APPWND_PADDING + ShapeView.Height();
 	ScoreView.Create(rect, left_offset, top_offset + APPWND_PADDING, right_side_width, TEXT_VIEW_HEIGHT, parent, COLOR_GAME_BKGROUND);
-	top_offset += /*APPWND_PADDING +*/ ScoreView.Height();
+	top_offset += ScoreView.Height();
 	SpeedView.Create(rect, left_offset, top_offset + APPWND_PADDING, right_side_width, TEXT_VIEW_HEIGHT, parent, COLOR_GAME_BKGROUND);
-	top_offset += /*APPWND_PADDING +*/ SpeedView.Height();
+	top_offset += SpeedView.Height();
 	TimeView.Create(rect, left_offset, top_offset + APPWND_PADDING, right_side_width, TEXT_VIEW_HEIGHT, parent, COLOR_GAME_BKGROUND);
+	top_offset += APPWND_PADDING + TimeView.Height();
+	HelpView.Create(rect, left_offset, top_offset + APPWND_PADDING, right_side_width, 
+		GameView.Height() - top_offset, parent, COLOR_GAME_BKGROUND);
 
 	//set fonts
 	ShapeView.Init(SCORE_TEXT_SIZE, SCORE_TEXT_FONT, SCORE_TEXT_COLOR);
 	ScoreView.Init(SCORE_TEXT_SIZE, SCORE_TEXT_FONT, SCORE_TEXT_COLOR);
 	SpeedView.Init(SCORE_TEXT_SIZE, SCORE_TEXT_FONT, SCORE_TEXT_COLOR);
 	TimeView.Init(SCORE_TEXT_SIZE, SCORE_TEXT_FONT, SCORE_TEXT_COLOR);
+	HelpView.Init(HELP_TEXT_SIZE, HELP_TEXT_FONT, SCORE_TEXT_COLOR);
 
 	//set text
 	SetScore();
 	SetSpeed();
 	SetTime();
+
+	//help text
+	constexpr LPCTSTR help_text =
+		L"Controls:\n"\
+		L"------------------\n"\
+		L"New\tENTER\n"\
+		L"Pause\tESC\n"\
+		L"Rotate\tW or UP\n"\
+		L"Left\tA or LEFT\n"\
+		L"Down\tS or DOWN\n"\
+		L"Right\tD or RIGHT\n"\
+		L"Drop\tSPACE\n"\
+		L"Grid\tG\n"\
+
+		L"\n"\
+		L"Bonus points:\n"\
+		L"------------------\n"\
+		L"1 line  - 0 points\n"\
+		L"2 lines - 1 points\n"\
+		L"3 lines - 2 points\n"\
+		L"4 lines - 3 points\n";
+
+	HelpView.SetText(help_text);
 
 	return TRUE;
 }
@@ -329,3 +404,4 @@ void CGameTab::Show(BOOL val /*= TRUE*/)
 	SpeedView.ShowWindow(show);
 	TimeView.ShowWindow(show);
 }
+

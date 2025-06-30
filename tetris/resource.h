@@ -26,13 +26,14 @@
 #define ID_HIGHSCORES                   40028
 #define ID_GAME_CLEARSCORES             40036
 #define ID_GAME_DELETESCORES            40037
+#define ID_SHOW_GRID                    40038
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        119
-#define _APS_NEXT_COMMAND_VALUE         40038
+#define _APS_NEXT_COMMAND_VALUE         40040
 #define _APS_NEXT_CONTROL_VALUE         1009
 #define _APS_NEXT_SYMED_VALUE           106
 #endif

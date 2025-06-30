@@ -128,6 +128,7 @@ CAppWnd::CAppWnd() : CFrameWnd(),
 	CRect tab_item_rect;
 	TabCtrl.GetItemRect(TAB_GAME, &tab_item_rect);
 	r.bottom += tab_item_rect.Height();
+	r.bottom += APPWND_PADDING;
 	MoveWindow(Options.LayoutX, Options.LayoutY, r.Width(), r.Height());
 	TabCtrl.SetWindowPos(NULL, 0, 0, r.Width(), r.Height(), SWP_NOMOVE | SWP_NOOWNERZORDER);
 	
@@ -171,15 +172,6 @@ CAppWnd::CAppWnd() : CFrameWnd(),
 	UpdateScoresList();
 
 	::AfxSetWindowText(m_hWnd, APP_FULL_NAME);
-}
-void CAppWnd::OnGameOver()
-{
-	ClockTimer.Kill();
-	GameState = GS_GAME_OVER;
-	//OnStartGame.GameView.OnGameOver();
-	if (Rating.add(CurrentScore))
-		UpdateScoresList();
-	CurrentScore = 0;
 }
 void CAppWnd::OnRotateLeft()
 {
@@ -241,7 +233,8 @@ void CAppWnd::StartGame()
 {
 	TetrisGame.new_game();
 
-	CurrentScore = 0;
+	Score = 0;
+	Lines = 0;
 	GameState = GS_RUNNING;
 
 	//init timers
@@ -320,17 +313,26 @@ void CAppWnd::ProcessResult(int engine_result)
 	case tetris::RESULT_SHAPE:
 	{
 		GameTab.ShapeView.SetShape(&TetrisGame.get_next_shape());
-		const int score = TetrisGame.get_score();
-		if (CurrentScore != score)
+		const int lines = TetrisGame.get_score();
+		if (Lines != lines)
 		{
-			CurrentScore = score;
-			GameTab.SetScore(score);
+			ASSERT(Lines < lines);
+			switch (lines - Lines)
+			{
+			case 1: Score += 1; break;
+			case 2: Score += 3; break;
+			case 3: Score += 5; break;
+			case 4: Score += 7; break;
+			default: ASSERT(FALSE);
+			}
+			Lines = lines;
+			GameTab.SetScore(Score);
 		}
-		GameTab.GameView.RePaint();
+		GameTab.GameView.Repaint();
 		break;
 	}
 	case tetris::RESULT_CHANGED:
-		GameTab.GameView.RePaint();
+		GameTab.GameView.Repaint();
 		break;
 	case tetris::RESULT_GAME_OVER:
 		StopGame(GS_GAME_OVER);
@@ -346,6 +348,7 @@ void CAppWnd::Exit()
 	GetWindowRect(&r);
 	Options.LayoutX = r.left;
 	Options.LayoutY = r.top;
+	Options.ShowGrid = GameTab.GameView.GetShowGrid();
 
 	//save rating
 	try
@@ -369,7 +372,7 @@ bool CAppWnd::QueryEndGame()
 
 		if (ShowQeuryMessage(L"Stop current game?"))
 		{
-			if (Rating.add(CurrentScore))
+			if (Rating.add(Score))
 				UpdateScoresList();
 			return true;
 		}
@@ -432,38 +435,31 @@ void CAppWnd::OnAbout()
 }
 void CAppWnd::OnTabChanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	//TODO:
-	RECT rc;
-	TabCtrl.GetItemRect(0, &rc);
 	const int selected_tab = TabCtrl.GetCurSel();
-
 	if (TAB_GAME == selected_tab)
 	{
 		GameTab.Show(TRUE);
-		//OnStartGame.SetWindowPos(NULL, rc.left + 1, rc.bottom + 1, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 		ScoreTab.ShowWindow(SW_HIDE);
 	}
 	else if (TAB_SCORES == selected_tab)
 	{
+		Pause();
 		GameTab.Show(FALSE);
-		//OnStartGame.ShowWindow(SW_HIDE);
+
+		RECT rc;
+		TabCtrl.GetItemRect(0, &rc);
 		ScoreTab.SetWindowPos(NULL, rc.left + 1, rc.bottom + 1, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 	}
 	else
 		ASSERT(FALSE);
-
-	//TODO:
-	//pause/unpause game when tab switches
-	//OnPause();
 }
 void CAppWnd::OnTabChanging(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	//TODO:
+	//TODO: is that required?
 	//const int selected_tab = TabCtrl.GetCurSel();
 	//if (TAB_GAME == selected_tab)
 	//{
 	//	GameTab.Show(FALSE);
-	//	//OnStartGame.ShowWindow(SW_HIDE);
 	//}
 	//else if (TAB_SCORES == selected_tab)
 	//{
@@ -509,6 +505,13 @@ void CAppWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				ProcessResult(TetrisGame.move_down());
 			break;
 		}
+	}
+
+	switch (nChar)
+	{
+	case 'G':
+		GameTab.GameView.ShowGrid();
+		break;
 	}
 	CFrameWnd::OnKeyDown(nChar, nRepCnt, nFlags);
 }

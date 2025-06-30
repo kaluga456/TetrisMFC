@@ -7,9 +7,6 @@ public:
 	CAppWnd();
 	~CAppWnd() {}
 
-	//DEPRECATE: GameField event handlers
-	void OnGameOver();
-
 	//system and user event handlers
 	afx_msg void OnStartGame();
 	afx_msg void OnRotateLeft();
@@ -71,7 +68,10 @@ private:
 		GS_PAUSED
 	};
 	int GameState{GS_NO_GAME};
-	int CurrentScore{ 0 };
+
+	//score
+	int Score{0};
+	int Lines{0};
 
 	//tabs
 	CTabCtrl TabCtrl;

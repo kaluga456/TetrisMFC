@@ -1,13 +1,13 @@
 #pragma once
 //////////////////////////////////////////////////////////////////////////////
 //sizes
-constexpr int BLOCK_VIEW_SIZE = 28;
+constexpr int BLOCK_VIEW_SIZE = 22;
 constexpr int APPWND_PADDING = 8;
 constexpr int GAME_FIELD_VIEW_WIDTH = BLOCK_VIEW_SIZE * tetris::GAME_FIELD_WIDTH;
 constexpr int GAME_FIELD_VIEW_HEIGHT = BLOCK_VIEW_SIZE * tetris::GAME_FIELD_HEIGHT;
 constexpr int RIGHT_SIDE_WIDTH = 200;
-constexpr int TEXT_VIEW_HEIGHT = 36;
-constexpr int SHAPE_VIEW_BLOCK_SIZE = 20;
+constexpr int TEXT_VIEW_HEIGHT = 28;
+constexpr int SHAPE_VIEW_BLOCK_SIZE = 18;
 constexpr int SHAPE_VIEW_HEIGHT = APPWND_PADDING + 4 * SHAPE_VIEW_BLOCK_SIZE + APPWND_PADDING;
 constexpr int BLOCK_DEFLATION = 1;
 //////////////////////////////////////////////////////////////////////////////
@@ -16,13 +16,18 @@ enum : COLORREF
 {
 	COLOR_BLACK = RGB(0, 0, 0),
 	COLOR_WHITE = RGB(255, 255, 255),
-	COLOR_GAME_BKGROUND = RGB(0x20, 0x20, 0x20)
+	COLOR_GAME_BKGROUND = RGB(0x20, 0x20, 0x20),
+	COLOR_GRID = RGB(0x60, 0x60, 0x60)
 };
 //////////////////////////////////////////////////////////////////////////////
 //fonts
+constexpr LPCTSTR FIELD_TEXT_FONT = _T("Tahoma");
+constexpr int FIELD_TEXT_SIZE = 48;
 constexpr LPCTSTR SCORE_TEXT_FONT = _T("Lucida Console");
 constexpr int SCORE_TEXT_SIZE = 16;
 constexpr COLORREF SCORE_TEXT_COLOR = RGB(0xE0, 0xE0, 0xE0);
+constexpr LPCTSTR HELP_TEXT_FONT = _T("Lucida Console");
+constexpr int HELP_TEXT_SIZE = 15;
 //////////////////////////////////////////////////////////////////////////////
 //base owner draw control
 class CGraphicView : public CStatic
@@ -39,7 +44,7 @@ public:
 	//draw
 	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override final;
 	virtual void Draw(CDC& dc, const RECT& rect) = 0;
-	void RePaint();
+	void Repaint();
 
 protected:
 	COLORREF BgColor{};
@@ -61,7 +66,14 @@ protected:
 	CFont Font;
 };
 //////////////////////////////////////////////////////////////////////////////
-//TODO: next shape view
+//owner draw multiline text control
+class CMultiTextView : public CTextView
+{
+public:
+	void Draw(CDC& dc, const RECT& rect) override;
+};
+//////////////////////////////////////////////////////////////////////////////
+//next shape view
 class CShapeView : public CTextView
 {
 public:
@@ -83,7 +95,9 @@ public:
 
 	void Init();
 	void SetMainText(LPCTSTR text = nullptr);
-
+	void ShowGrid(); //switch
+	void ShowGrid(bool enable);
+	bool GetShowGrid() const { return IsGrid; }
 	void Draw(CDC& dc, const RECT& rect) override;
 
 private:
@@ -91,9 +105,7 @@ private:
 	CFont Font;
 	CString Text;
 
-	//blocks
-	tetris::block_t Blocks[tetris::GAME_FIELD_WIDTH][tetris::GAME_FIELD_HEIGHT]{};
-
+	bool IsGrid{ true };
 	void DrawBlock(CDC& dc, int x, int y, tetris::block_t color);
 };
 //////////////////////////////////////////////////////////////////////////////
@@ -113,7 +125,7 @@ public:
 
 	void SetScore(int score = -1);
 	void SetSpeed(int speed = -1);
-	void SetTime(int value = -1); //мс
+	void SetTime(int value = -1); //ms
 
 	BOOL Init(const CRect& rect, CWnd* pParentWnd);
 	void Show(BOOL val = TRUE);
@@ -122,5 +134,6 @@ private:
 	CTextView ScoreView;
 	CTextView SpeedView;
 	CTextView TimeView;
+	CMultiTextView HelpView;
 };
 //////////////////////////////////////////////////////////////////////////////

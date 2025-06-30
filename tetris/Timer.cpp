@@ -86,19 +86,6 @@ void CTimer::Kill()
 }
 //////////////////////////////////////////////////////////////////////////////
 //CMoveKeyTimer
-bool CMoveKeyTimer::IsMoveKey(UINT key) const
-{
-	return	VK_LEFT == key || 'A' == key ||
-			VK_RIGHT == key || 'D' == key ||
-			VK_DOWN == key || 'S' == key;
-}
-UINT CMoveKeyTimer::GetMoveType() const
-{
-	if (VK_LEFT == Key || 'A' == Key) return MT_MOVE_LEFT;
-	if (VK_RIGHT == Key || 'D' == Key) return MT_MOVE_RIGHT;
-	if (VK_DOWN == Key || 'S' == Key) return MT_MOVE_DOWN;
-	return MT_UNDEFINED;
-}
 bool CMoveKeyTimer::Start()
 {
 	//already started
@@ -107,22 +94,5 @@ bool CMoveKeyTimer::Start()
 
 	CTimer::Start(Options.KeyboardSpeed);
 	return true;
-}
-bool CMoveKeyTimer::OnKeyDown(UINT key)
-{
-	if (false == IsMoveKey(key)) return false;
-	if (Timer) return false;
-	if (key == Key) return false;
-
-	ASSERT(0 == Timer);
-	Key = key;
-	CTimer::Start(Options.KeyboardSpeed);
-	return true;
-}
-void CMoveKeyTimer::OnKeyUp(UINT key)
-{
-	if (false == IsMoveKey(key)) return;
-	Kill();
-	Key = 0;
 }
 //////////////////////////////////////////////////////////////////////////////

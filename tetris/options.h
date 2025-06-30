@@ -15,7 +15,7 @@ public:
 	int LayoutX;
 	int LayoutY;
 	int KeyboardSpeed;
-	int Sound;
+	bool ShowGrid{true};
 
 private:
 	TCHAR IniFileName[MAX_PATH];

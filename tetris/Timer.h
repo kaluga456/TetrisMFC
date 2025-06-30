@@ -1,18 +1,5 @@
 #pragma once
 //////////////////////////////////////////////////////////////////////////////
-//TODO: shape movement types
-enum : int
-{
-	MT_UNDEFINED = 0,
-
-	MT_MOVE_DOWN,
-	MT_MOVE_RIGHT,
-	MT_MOVE_LEFT,
-
-	MT_ROTATE_LEFT,
-	MT_ROTATE_RIGHT
-};
-//////////////////////////////////////////////////////////////////////////////
 //timer IDs
 enum : UINT_PTR
 {
@@ -110,16 +97,6 @@ public:
 	explicit CMoveKeyTimer(UINT_PTR id) : CTimer(id) {}
 	~CMoveKeyTimer() { ::KillTimer(Parent, Id); }
 
-	//access
-	UINT GetMoveType() const;
-	bool IsMoveKey(UINT key) const;
-
-	//start|stop
 	bool Start();
-	bool OnKeyDown(UINT key); //return true if timer started
-	void OnKeyUp(UINT key);
-
-protected:
-	UINT Key{}; //pressed move key or 0
 };
 //////////////////////////////////////////////////////////////////////////////

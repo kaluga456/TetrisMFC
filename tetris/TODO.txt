@@ -4,11 +4,12 @@ TODO:
 + tab change event
 + pause on tab change
 + use TetrisEngine module
-- next shape view
++ next shape view
 + movement keys timers
-- multiline text view
++ help text view
 + speed boost
-- bonus score points
++ bonus score points
++ grid
 
 BUG:
 + movement keys focus
