@@ -258,6 +258,7 @@ void CAppWnd::StopGame(int game_state)
 
 	if (GS_GAME_OVER == game_state)
 	{
+		GameTab.ShapeView.SetShape();
 		GameTab.GameView.SetMainText(L"GAME OVER");
 		GameState = GS_GAME_OVER;
 	}
@@ -428,9 +429,14 @@ void CAppWnd::OnAbout()
 	LPCTSTR about_msg = APP_FULL_NAME \
 		L"\n\n"
 		L"Controls:\n"
-		L"Move shape:\tASD or arrow keys\n"
-		L"Rotate shape:\tW or UP\n"
-		L"Drop shape:\tSPACE\n";
+		L"New      \tENTER     \n"
+		L"Pause    \tESC       \n"
+		L"Rotate   \tW or UP   \n"
+		L"Left     \tA or LEFT \n"
+		L"Down     \tS or DOWN \n"
+		L"Right    \tD or RIGHT\n"
+		L"Drop     \tSPACE     \n"
+		L"Grid     \tG         \n";
 	MessageBox(about_msg, _T("About"), MB_OK | MB_ICONINFORMATION);
 }
 void CAppWnd::OnTabChanged(NMHDR* pNMHDR, LRESULT* pResult)

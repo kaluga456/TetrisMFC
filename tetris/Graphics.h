@@ -26,8 +26,8 @@ constexpr int FIELD_TEXT_SIZE = 48;
 constexpr LPCTSTR SCORE_TEXT_FONT = _T("Lucida Console");
 constexpr int SCORE_TEXT_SIZE = 16;
 constexpr COLORREF SCORE_TEXT_COLOR = RGB(0xE0, 0xE0, 0xE0);
-constexpr LPCTSTR HELP_TEXT_FONT = _T("Lucida Console");
-constexpr int HELP_TEXT_SIZE = 15;
+constexpr LPCTSTR HELP_TEXT_FONT = _T("Consolas");
+constexpr int HELP_TEXT_SIZE = 17;
 //////////////////////////////////////////////////////////////////////////////
 //base owner draw control
 class CGraphicView : public CStatic

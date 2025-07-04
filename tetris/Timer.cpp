@@ -29,11 +29,10 @@ void CTickCounter::Resume(ULONGLONG ticks)
 //CGameTick
 bool CGameTick::Check(ULONGLONG ticks)
 {
-	//TODO: increase speed
 	const ULONGLONG d = static_cast<ULONGLONG>(ticks - BoostTicks);
 	if (d >= SPEED_BOOST_INTERVAL)
 	{
-		if(Interval > MIN_TICK_INTERVAL)
+		if (Interval > MIN_TICK_INTERVAL)
 			Interval -= MAX_TICK_INTERVAL / 100;
 		BoostTicks = ticks;
 	}
@@ -52,7 +51,7 @@ void CGameTick::Resume(ULONGLONG ticks)
 }
 int CGameTick::GetSpeed() const
 {
-	const int result = 100 - static_cast<int>(100. * static_cast<float>(Interval) / MAX_TICK_INTERVAL);
+	const int result = 100 - static_cast<int>(100.f * static_cast<float>(Interval) / MAX_TICK_INTERVAL);
 	if (result < 0) return 0;
 	if (result > 100) return 100;
 	return result;

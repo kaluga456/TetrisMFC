@@ -96,9 +96,8 @@ void CMultiTextView::Draw(CDC& dc, const RECT& rect)
 	CFont* old_font = dc.SelectObject(&Font);
 	dc.SetTextColor(FontColor);
 	RECT r(rect);
-	r.left += APPWND_PADDING;
 	r.top += APPWND_PADDING;
-	dc.DrawText(Text, &r, DT_LEFT | DT_NOPREFIX | DT_EXPANDTABS);
+	dc.DrawText(Text, &r, DT_CENTER | DT_NOPREFIX);
 	dc.SelectObject(old_font);
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -147,7 +146,17 @@ void CShapeView::Draw(CDC& dc, const RECT& rect)
 
 	//no shape to draw
 	if (nullptr == Matrix)
+	{
+		//draw text
+		CFont* old_font = dc.SelectObject(&Font);
+		dc.SetBkColor(BgColor);
+		dc.SetTextColor(SCORE_TEXT_COLOR);
+		RECT r(rect);
+		r.top += SCORE_TEXT_SIZE;
+		dc.DrawText(L"Press ENTER\nto start\nnew game", &r, DT_CENTER | DT_NOPREFIX);
+		dc.SelectObject(old_font);
 		return;
+	}
 
 	//draw shape
 	CRect client_rect;
@@ -184,6 +193,7 @@ void CShapeView::Draw(CDC& dc, const RECT& rect)
 
 	//draw text
 	CFont* old_font = dc.SelectObject(&Font);
+	dc.SetBkColor(BgColor);
 	dc.SetTextColor(SCORE_TEXT_COLOR);
 	RECT r(rect);
 	r.left += APPWND_PADDING;
@@ -370,27 +380,26 @@ BOOL CGameTab::Init(const CRect& rect, CWnd* parent)
 	SetSpeed();
 	SetTime();
 
-	//help text
+	//help view text
 	constexpr LPCTSTR help_text =
-		L"Controls:\n"\
-		L"------------------\n"\
-		L"New\tENTER\n"\
-		L"Pause\tESC\n"\
-		L"Rotate\tW or UP\n"\
-		L"Left\tA or LEFT\n"\
-		L"Down\tS or DOWN\n"\
-		L"Right\tD or RIGHT\n"\
-		L"Drop\tSPACE\n"\
-		L"Grid\tG\n"\
+		L"Controls  \n"
+		L"____________________\n"
+		L"New       ENTER     \n"
+		L"Pause     ESC       \n"
+		L"Rotate    W or UP   \n"
+		L"Left      A or LEFT \n"
+		L"Down      S or DOWN \n"
+		L"Right     D or RIGHT\n"
+		L"Drop      SPACE     \n"
+		L"Grid      G         \n"
 
-		L"\n"\
-		L"Bonus points:\n"\
-		L"------------------\n"\
-		L"1 line  - 0 points\n"\
-		L"2 lines - 1 points\n"\
-		L"3 lines - 2 points\n"\
-		L"4 lines - 3 points\n";
-
+		L"\n"
+		L"Bonus points\n"
+		L"____________________\n"
+		L"1 line    0 points  \n"
+		L"2 lines   1 points  \n"
+		L"3 lines   2 points  \n"
+		L"4 lines   3 points  \n";
 	HelpView.SetText(help_text);
 
 	return TRUE;
