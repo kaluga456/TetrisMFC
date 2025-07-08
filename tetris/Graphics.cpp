@@ -114,14 +114,15 @@ void CShapeView::GetShapeRect(const tetris::shape_matrix_t* matrix, CRect& rect)
 	{
 		for (int y = 0; y < tetris::SHAPE_MATRIX_SIZE; ++y)
 		{
-			if (0 == mx[x][y])
-				continue;
+			if (0 == mx[x][y]) continue;
 			if (rect.left > x) rect.left = x;
 			if (rect.top > y) rect.top = y;
 			if (rect.right < x) rect.right = x;
 			if (rect.bottom < y) rect.bottom = y;
 		}
 	}
+	ASSERT(rect.left <= rect.right);
+	ASSERT(rect.top <= rect.bottom);
 }
 void CShapeView::SetShape(const tetris::shape_t* shape /*= nullptr*/)
 {
@@ -258,11 +259,6 @@ void CGameView::Draw(CDC& dc, const RECT& rect)
 {
 	//draw background
 	dc.FillSolidRect(&rect, BgColor);
-
-	//TEST: draw frame
-	//CRect client_rect;
-	//GetClientRect(&client_rect);
-	//dc.DrawEdge(client_rect, EDGE_SUNKEN, BF_RECT);
 
 	//draw grid
 	if (true == IsGrid)

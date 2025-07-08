@@ -26,14 +26,11 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 IDR_ACCELERATOR ACCELERATORS
 BEGIN
-    VK_SPACE,       ID_DROP,                VIRTKEY, NOINVERT
+    VK_F1,          ID_ABOUT,               VIRTKEY, NOINVERT
     VK_F4,          ID_GAME_OPTIONS,        VIRTKEY, NOINVERT
-    VK_F1,          ID_HELP_HELP,           VIRTKEY, NOINVERT
     VK_F3,          ID_HIGHSCORES,          VIRTKEY, NOINVERT
     VK_RETURN,      ID_NEW_GAME,            VIRTKEY, NOINVERT
     VK_ESCAPE,      ID_PAUSE,               VIRTKEY, NOINVERT
-    VK_UP,          ID_ROTATE_LEFT,         VIRTKEY, NOINVERT
-    VK_OEM_6,       ID_ROTATE_RIGHT,        VIRTKEY, NOINVERT
 END
 
 
@@ -46,7 +43,7 @@ IDR_MAIN_MENU MENU
 BEGIN
     POPUP "&Game"
     BEGIN
-        MENUITEM "&New game\tEnter",            ID_NEW_GAME
+        MENUITEM "&New Game\tEnter",            ID_NEW_GAME
         MENUITEM "&Pause/Resume game\tEscape",  ID_PAUSE
         MENUITEM SEPARATOR
         MENUITEM "&Options...\tF4",             ID_GAME_OPTIONS
@@ -56,9 +53,7 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&Help...\tF1",                ID_HELP_HELP
         MENUITEM "&Rating...\tF3",              ID_HIGHSCORES
-        MENUITEM SEPARATOR
         MENUITEM "&About..",                    ID_ABOUT
     END
 END
@@ -119,6 +114,17 @@ ID_MAIN_ICON            ICON                    "res\\ID_MAIN_ICON.ico"
 //
 
 IDB_BACKGROUND          BITMAP                  "res\\Background.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_APP_TITLE       "TetrisMFC"
+END
 
 #endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////

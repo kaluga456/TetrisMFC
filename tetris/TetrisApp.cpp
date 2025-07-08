@@ -8,26 +8,26 @@
 #include "Timer.h"
 #include "AppWnd.h"
 #include "tetrisapp.h"
-
+//////////////////////////////////////////////////////////////////////////////
 COptions Options;
 CTetrisApp TetrisApp;
-CAppWnd* AppWnd;
-CWinApp* ThisApp = &TetrisApp;
-
+//////////////////////////////////////////////////////////////////////////////
 BOOL CTetrisApp::InitInstance()
 {
-	Options.Read(m_pszProfileName);
+	CWinApp::InitInstance();
+
+	//NOTE: app title defined in resource string AFX_IDS_APP_TITLE
+	SetRegistryKey(_T("Kaluga456"));
+	Options.Read(GetAppRegistryKey());
 
     m_pMainWnd = new CAppWnd;
-	AppWnd = STATIC_DOWNCAST(CAppWnd, m_pMainWnd);
 	m_pMainWnd->ShowWindow(m_nCmdShow);
     m_pMainWnd->UpdateWindow();
-	hAccelTable = LoadAccelerators(m_hInstance, (LPCTSTR)IDR_ACCELERATOR);
     return TRUE;
 }
-
 int CTetrisApp::ExitInstance()
 {
-	Options.Write();
+	Options.Write(GetAppRegistryKey());
 	return CWinApp::ExitInstance();
 }
+//////////////////////////////////////////////////////////////////////////////

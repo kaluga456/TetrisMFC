@@ -5,12 +5,9 @@ class CAppWnd : public CFrameWnd
 DECLARE_MESSAGE_MAP ()
 public:
 	CAppWnd();
-	~CAppWnd() {}
 
 	//system and user event handlers
 	afx_msg void OnStartGame();
-	afx_msg void OnRotateLeft();
-	afx_msg void OnRotateRight();
 	afx_msg void OnDrop();
 	afx_msg void OnPause();
 	afx_msg void OnExit();
@@ -22,7 +19,6 @@ public:
 	afx_msg void OnRating();
 	afx_msg void OnClearRating();
 	afx_msg void OnTabChanged(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnTabChanging(NMHDR* pNMHDR, LRESULT* pResult);
 
 	//timer events
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

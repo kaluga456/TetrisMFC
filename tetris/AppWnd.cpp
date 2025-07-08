@@ -53,9 +53,6 @@ static CShapeGenerator ShapeGenerator;
 //////////////////////////////////////////////////////////////////////////////
 BEGIN_MESSAGE_MAP(CAppWnd, CWnd)
 	ON_COMMAND(ID_NEW_GAME, OnStartGame)
-	ON_COMMAND(ID_ROTATE_LEFT, OnRotateLeft)
-	ON_COMMAND(ID_ROTATE_RIGHT, OnRotateRight)
-	ON_COMMAND(ID_DROP, OnDrop)
 	ON_COMMAND(ID_PAUSE, OnPause)
 	ON_COMMAND(ID_EXIT, OnExit)
 	ON_COMMAND(ID_ABOUT, OnAbout)
@@ -63,7 +60,6 @@ BEGIN_MESSAGE_MAP(CAppWnd, CWnd)
 	ON_COMMAND(ID_GAME_DELETESCORES, OnClearRating)
 	ON_COMMAND(ID_HIGHSCORES, OnRating)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_CTRL, &CAppWnd::OnTabChanged)
-	ON_NOTIFY(TCN_SELCHANGING, IDC_TAB_CTRL, &CAppWnd::OnTabChanging)
 	ON_WM_TIMER()
 	ON_WM_CLOSE()
 	ON_WM_KEYDOWN()
@@ -88,6 +84,7 @@ CAppWnd::CAppWnd() : CFrameWnd(),
 		pEx->Delete();
 		return;
 	}
+
 	CRect r(Options.LayoutX, 
 			Options.LayoutY, 
 			Options.LayoutX + CGameTab::GetWidth(),
@@ -173,21 +170,6 @@ CAppWnd::CAppWnd() : CFrameWnd(),
 
 	::AfxSetWindowText(m_hWnd, APP_FULL_NAME);
 }
-void CAppWnd::OnRotateLeft()
-{
-	if(GameState == GS_RUNNING)
-		ProcessResult(TetrisGame.rotate_left());
-}
-void CAppWnd::OnRotateRight()
-{
-	if(GameState == GS_RUNNING)
-		ProcessResult(TetrisGame.rotate_right());
-}
-void CAppWnd::OnDrop()
-{
-	if(GameState == GS_RUNNING)
-		ProcessResult(TetrisGame.drop());
-}
 static int CALLBACK ScoreListViewSort(LPARAM param1, LPARAM param2, LPARAM ascending)
 {
 	return param1 > param2;
@@ -256,21 +238,26 @@ void CAppWnd::StopGame(int game_state)
 	RightKeyTimer.Kill();
 	DownKeyTimer.Kill();
 
+	//save score
+	if (Rating.add(Score))
+		UpdateScoresList();
+
+	GameState = game_state;
 	if (GS_GAME_OVER == game_state)
 	{
 		GameTab.ShapeView.SetShape();
 		GameTab.GameView.SetMainText(L"GAME OVER");
-		GameState = GS_GAME_OVER;
 	}
 	else if (GS_NO_GAME == game_state)
 	{
+		Score = 0;
+		Lines = 0;
 		TetrisGame.clear();
 		GameTab.GameView.SetMainText();
 		GameTab.ShapeView.SetShape();
 		GameTab.SetScore();
 		GameTab.SetSpeed();
 		GameTab.SetTime();
-		GameState = GS_NO_GAME;
 	}
 	else
 		ASSERT(FALSE);
@@ -315,9 +302,9 @@ void CAppWnd::ProcessResult(int engine_result)
 	{
 		GameTab.ShapeView.SetShape(&TetrisGame.get_next_shape());
 		const int lines = TetrisGame.get_score();
+		ASSERT(Lines <= lines);
 		if (Lines != lines)
 		{
-			ASSERT(Lines < lines);
 			switch (lines - Lines)
 			{
 			case 1: Score += 1; break;
@@ -350,7 +337,7 @@ void CAppWnd::Exit()
 	Options.LayoutX = r.left;
 	Options.LayoutY = r.top;
 	Options.ShowGrid = GameTab.GameView.GetShowGrid();
-
+	
 	//save rating
 	try
 	{
@@ -373,8 +360,7 @@ bool CAppWnd::QueryEndGame()
 
 		if (ShowQeuryMessage(L"Stop current game?"))
 		{
-			if (Rating.add(Score))
-				UpdateScoresList();
+			StopGame(GS_NO_GAME);
 			return true;
 		}
 
@@ -407,7 +393,7 @@ void CAppWnd::OnRating()
 }
 void CAppWnd::OnClearRating()
 {
-	if(false == ShowQeuryMessage(L"Delete best scores?"))
+	if(false == ShowQeuryMessage(L"Clear Rating?"))
 		return;
 
 	Rating.clear();
@@ -426,7 +412,7 @@ void CAppWnd::OnClearRating()
 void CAppWnd::OnAbout()
 {
 	Pause();
-	LPCTSTR about_msg = APP_FULL_NAME \
+	LPCTSTR about_msg = APP_FULL_NAME
 		L"\n\n"
 		L"Controls:\n"
 		L"New      \tENTER     \n"
@@ -459,25 +445,9 @@ void CAppWnd::OnTabChanged(NMHDR* pNMHDR, LRESULT* pResult)
 	else
 		ASSERT(FALSE);
 }
-void CAppWnd::OnTabChanging(NMHDR* pNMHDR, LRESULT* pResult) 
-{
-	//TODO: is that required?
-	//const int selected_tab = TabCtrl.GetCurSel();
-	//if (TAB_GAME == selected_tab)
-	//{
-	//	GameTab.Show(FALSE);
-	//}
-	//else if (TAB_SCORES == selected_tab)
-	//{
-	//	ScoreTab.ShowWindow(SW_HIDE);
-	//}
-	//else
-	//	ASSERT(FALSE);
-}
 bool CAppWnd::ShowQeuryMessage(LPCTSTR message)
 {
-	const int result = ::AfxMessageBox(message, MB_OKCANCEL | MB_ICONEXCLAMATION, NULL);
-	return IDOK == result;
+	return IDOK == ::AfxMessageBox(message, MB_OKCANCEL | MB_ICONEXCLAMATION, NULL);;
 }
 void CAppWnd::ShowWarningMessage(LPCTSTR message)
 {
@@ -489,9 +459,13 @@ void CAppWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
 		switch (nChar)
 		{
+		//shape rotation
 		case VK_UP:
 		case 'W':
-			OnRotateLeft();
+			ProcessResult(TetrisGame.rotate_left());
+			break;
+		case 'E':
+			ProcessResult(TetrisGame.rotate_right());
 			break;
 
 		//make first move immediately
@@ -510,6 +484,9 @@ void CAppWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 			if(DownKeyTimer.Start())
 				ProcessResult(TetrisGame.move_down());
 			break;
+
+		case VK_SPACE:
+			ProcessResult(TetrisGame.drop());
 		}
 	}
 

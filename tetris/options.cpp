@@ -1,38 +1,42 @@
 #include "stdafx.h"
 #pragma hdrstop
 #include "options.h"
+//////////////////////////////////////////////////////////////////////////////
+int COptions::ReadInt(CRegKey& rk, LPCTSTR key, int def_value /*= 0*/)
+{
+	DWORD result{0};
+	if (ERROR_SUCCESS == rk.QueryDWORDValue(key, result))
+		return static_cast<int>(result);
+	return def_value;
+}
+void COptions::WriteInt(CRegKey& rk, LPCTSTR key, int value) const
+{
+	rk.SetDWORDValue(key, static_cast<DWORD>(value));
+}
+void COptions::Read(HKEY reg_key)
+{
+	CRegKey rk;
+	rk.Attach(reg_key);
 
-int COptions::GetInt(LPCTSTR section, LPCTSTR key, int def_value) const
-{
-	ASSERT(IniFileName);
-	return ::GetPrivateProfileInt(section, key, def_value, IniFileName);
+	LayoutX = ReadInt(rk, _T("LayoutX"), 100);
+	LayoutY = ReadInt(rk, _T("LayoutY"), 100);
+	ShowGrid = ReadInt(rk, _T("ShowGrid"), TRUE);
+
+	KeyboardSpeed = ReadInt(rk, _T("KeyboardSpeed"), KEYBOARD_DEF_SPEED);
+	KeyboardSpeed = std::clamp<int>(KeyboardSpeed, KEYBOARD_MAX_SPEED, KEYBOARD_MIN_SPEED);
+
+	rk.Detach();
 }
-void COptions::WriteInt(LPCTSTR section, LPCTSTR key, int value) const
+void COptions::Write(HKEY reg_key) const
 {
-	ASSERT(IniFileName);
-	TCHAR value_string[16];
-	_sntprintf_s<16>(value_string, 15, _T("%d"), value);
-	::WritePrivateProfileString(section, key, value_string, IniFileName);
+	CRegKey rk;
+	rk.Attach(reg_key);
+
+	WriteInt(rk, _T("LayoutX"), LayoutX);
+	WriteInt(rk, _T("LayoutY"), LayoutY);
+	WriteInt(rk, _T("ShowGrid"), ShowGrid);
+	WriteInt(rk, _T("KeyboardSpeed"), KeyboardSpeed);
+
+	rk.Detach();
 }
-void COptions::Read(LPCTSTR ini_file_name)
-{
-	GetCurrentDirectory(MAX_PATH, IniFileName);
-	lstrcat(IniFileName, _T("\\"));
-	lstrcat(IniFileName, ini_file_name);
-	LayoutX = GetInt(_T("Layuot"), _T("LayoutX"), 100);
-	LayoutY = GetInt(_T("Layuot"), _T("LayoutY"), 100);
-	ShowGrid = GetInt(_T("Layuot"), _T("ShowGrid"), 1);
-	
-	KeyboardSpeed = GetInt(_T("Game"), _T("KeyboardSpeed"), 75);
-	if(KeyboardSpeed > KEYBOARD_MIN_SPEED)
-		KeyboardSpeed = KEYBOARD_MIN_SPEED;
-	else if(KeyboardSpeed < KEYBOARD_MAX_SPEED)
-		KeyboardSpeed = KEYBOARD_MAX_SPEED;
-}
-void COptions::Write()
-{
-	WriteInt(_T("Layuot"), _T("LayoutX"), LayoutX);
-	WriteInt(_T("Layuot"), _T("LayoutY"), LayoutY);
-	WriteInt(_T("Layuot"), _T("ShowGrid"), ShowGrid);
-	WriteInt(_T("Game"), _T("KeyboardSpeed"), KeyboardSpeed);
-}
+//////////////////////////////////////////////////////////////////////////////
